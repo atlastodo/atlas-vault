@@ -19,16 +19,18 @@ or folder.
 - **Secret history**: changing or removing a hidden or TOTP field keeps its earlier values (five
   per field).
 - **Trash**: deleting moves an item to the trash, to restore or delete for good.
+- **Offline first**: the vault is kept on the device, encrypted at rest, so it opens without the
+  network and edits made offline wait there and sync later.
 - **Auto-lock** after inactivity (1 min to 4 h, per device) and on demand. Locking forgets the
-  vault's keys and every decrypted item on the device; the account password opens it again.
+  vault's keys and every decrypted item on the device, and closes its encrypted database; the
+  account password opens it again.
 - **API tokens for CI**: make a vault token in Settings (read-only unless you allow writes, and
   it always expires, within a year) and read secrets in a pipeline with
   `atlas vault get "Deploy key" --field token`.
 - **Web first**, the same app on Android (Expo + React Native, the web through
   react-native-web).
 
-Not in this version: a browser extension or autofill, sharing items with other accounts, and
-offline use (see [How it works](#how-it-works)).
+Not in this version: a browser extension or autofill, and sharing items with other accounts.
 
 ## How it works
 
@@ -46,11 +48,17 @@ must offer the vault: `ATLAS_APPS=todo,vault` (core 0.1.11-rc.8 or later).
 - **The CLI's rules.** Items are written by core's shared rules (`@atlastodo/shared`), the same
   the `atlas vault` CLI and the SDK's `VaultClient` use, and an end-to-end test runs the app's
   code and the CLI against a real server, both ways.
-- **Nothing decrypted at rest.** The vault's store is in memory only: each unlock pulls the vault
-  from the server, and locking or closing the app drops it. (Core's durable local store keeps
-  values in plaintext, which a locked password manager must not leave on disk; offline use waits
-  for an encrypted one.) The session's keys are kept only while unlocked: in the OS keychain on
-  Android, sealed under a non-extractable WebCrypto key in a browser.
+- **Nothing decrypted at rest.** The device keeps the vault's op log (IndexedDB in a browser,
+  SQLite on Android) sealed with client-core's `sealPersistence`: every value is stored encrypted
+  under a key derived from the vault key (`deriveLocalStoreKey`), which exists only while the
+  vault is unlocked. On disk are ids, field names and clocks (what the server sees too) and
+  ciphertext. An unlock opens the local copy without downloading the vault again; a copy that
+  does not open with the key (another key or account, tampering) is cleared and downloaded
+  again. Locking closes the database and wipes the derived key; signing out deletes the database.
+- **The session's keys** are kept only while unlocked: in the OS keychain on Android, sealed
+  under a non-extractable WebCrypto key in a browser. In a browser the vault key itself is in that
+  profile while unlocked (as the session), so the at-rest sealing protects a locked vault, not
+  an unlocked one.
 
 The cryptography, store and sync come from the core packages
 ([`@atlastodo/client-core`](https://www.npmjs.com/package/@atlastodo/client-core) and
