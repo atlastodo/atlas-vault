@@ -21,7 +21,7 @@ export function FoldersScreen({ onBack }: { onBack: () => void }) {
   const { items, version, kick } = useVault();
   const folders = useMemo(
     () => items.folders(),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [items, version],
   );
   const [name, setName] = useState("");

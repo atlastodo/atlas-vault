@@ -16,7 +16,7 @@ export function HistoryScreen({ id, onBack }: { id: string; onBack: () => void }
   const { items, version } = useVault();
   const item = useMemo(
     () => items.get(id),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [items, version, id],
   );
   const groups = useMemo(() => {

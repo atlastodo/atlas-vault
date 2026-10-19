@@ -70,13 +70,13 @@ in
   # other, and a read-only vault token is refused writes. Needs a core checkout (ATLAS_CORE_DIR,
   # default ../atlas) and a Postgres; see scripts/e2e-cli.sh.
   scripts."e2e:cli".exec = ''bash "$DEVENV_ROOT/scripts/e2e-cli.sh" "$@"'';
-  # Typecheck every workspace, ESLint, `prettier --check` and the shipped licences.
+  # Typecheck every workspace, oxlint (`.oxlintrc.json`), `prettier --check` and the shipped licences.
   scripts.lint.exec = ''
     set -euo pipefail
     cd "$DEVENV_ROOT"
     (cd packages/vault-core && bun run typecheck)
     (cd apps/vault && bun run typecheck)
-    bunx eslint .
+    bunx oxlint .
     bunx prettier --check .
     node scripts/third-party-licenses.mjs --check
     # nix/bun.nix must match bun.lock, or the flake's web-dist build fails offline.

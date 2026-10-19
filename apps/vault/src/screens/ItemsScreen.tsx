@@ -42,7 +42,7 @@ export function ItemsScreen({
   const { folders, tags, total } = useMemo(
     () => ({ folders: items.folders(), tags: items.tags(), total: items.list().length }),
     // `version` bumps on every store change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [items, version],
   );
   const shown = useMemo(() => {
@@ -51,7 +51,7 @@ export function ItemsScreen({
     if (scope.kind === "folder") query.folder = scope.id;
     if (scope.kind === "none") query.folder = "none";
     return items.list(query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [items, version, search, scope, type, tag]);
 
   const scopeChip = (label: string, s: Scope) => (

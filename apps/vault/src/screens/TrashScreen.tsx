@@ -11,7 +11,7 @@ export function TrashScreen({ onBack }: { onBack: () => void }) {
   const { items, version, kick } = useVault();
   const trashed = useMemo(
     () => items.trashed(),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [items, version],
   );
   const purge = async (id: string, name: string) => {
