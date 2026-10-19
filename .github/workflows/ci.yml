@@ -1,14 +1,12 @@
 # Lint, typecheck and test for every push to dev and main and every PR, or on demand. A push or PR
 # only runs the jobs whose files changed (see `changes`); the audit runs when dependencies change
-# and once a week. release.yml calls this same workflow on a v* tag, so a release is gated on the
-# full suite.
+# and once a week.
 name: CI
 
 on:
   push:
     branches: [main, dev]
   pull_request:
-  workflow_call:
   workflow_dispatch:
   schedule:
     - cron: "17 5 * * 1"
@@ -17,8 +15,6 @@ permissions:
   contents: read
 
 concurrency:
-  # Literal "ci-" prefix: when release.yml calls this workflow, github.workflow is the caller's
-  # name, and a group shared with the caller would make this run wait on its own parent.
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
@@ -32,9 +28,8 @@ env:
   NODE_VERSION: "26"
 
 jobs:
-  # Decides which jobs run. A tag, a manual run or a call from release.yml runs everything; the
-  # weekly schedule runs only the audit. The branch push of a release commit
-  # (`chore(release): vX.Y.Z`) runs nothing: its tag runs the full suite for that commit.
+  # Decides which jobs run. A manual run, a tag or a branch's first push runs everything; the
+  # weekly schedule runs only the audit.
   changes:
     name: Changes
     runs-on: ubuntu-24.04
@@ -56,7 +51,6 @@ jobs:
           BEFORE: ${{ github.event.before }}
           SHA: ${{ github.sha }}
           PR: ${{ github.event.pull_request.number }}
-          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           set_all() { for k in lint core app deps; do echo "$k=$1" >>"$GITHUB_OUTPUT"; done; }
           case "$EVENT" in
@@ -67,7 +61,6 @@ jobs:
               ;;
             push)
               if [ "$REF_TYPE" = tag ] || [[ "$BEFORE" =~ ^0*$ ]]; then set_all true; exit 0; fi
-              if [[ "$HEAD_MESSAGE" == "chore(release):"* ]]; then set_all false; exit 0; fi
               files="$(gh api "repos/$REPO/compare/$BEFORE...$SHA" --jq '.files[].filename')"
               ;;
             pull_request)
