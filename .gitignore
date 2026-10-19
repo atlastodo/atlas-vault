@@ -23,19 +23,10 @@ result-*
 !.env.example
 *.local
 
-# Android (signing keystores never belong in the repo)
-.android/
-*.jks
-*.keystore
-local.properties
-*.apk
-*.aab
+# Expo's local state, and native projects a stray `expo prebuild` would generate.
+apps/vault/.expo/
 apps/vault/android/
 apps/vault/ios/
-apps/vault/.expo/
-# The local Expo modules' Gradle output from a native build.
-apps/vault/modules/*/android/build/
-apps/vault/modules/*/android/.gradle/
 
 # OS / editor
 .DS_Store

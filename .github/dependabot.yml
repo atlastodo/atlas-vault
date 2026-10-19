@@ -7,8 +7,7 @@
 version: 2
 updates:
   - package-ecosystem: github-actions
-    # The root covers .github/workflows; the composite actions need listing.
-    directories: ["/", "/.github/actions/*"]
+    directory: /
     target-branch: dev
     schedule:
       interval: weekly
