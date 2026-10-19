@@ -1,6 +1,6 @@
 {
   "name": "@atlastodo/vault-core",
-  "version": "0.1.0",
+  "version": "0.1.0-rc.1",
   "private": true,
   "description": "Atlas Vault's platform-free core: vault items and folders over client-core (core's shared item rules, at parity with the atlas CLI), the password generator, TOTP, auto-lock, opening the vault app key, vault API tokens and the sync engine",
   "license": "AGPL-3.0-only",
