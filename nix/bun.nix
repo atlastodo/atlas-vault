@@ -1543,9 +1543,9 @@
     url = "https://registry.npmjs.org/babel-preset-current-node-syntax/-/babel-preset-current-node-syntax-1.2.0.tgz";
     hash = "sha512-E/VlAEzRrsLEb2+dv8yp3bo4scof3l9nR4lrld+Iy5NyVqgVYUJnDAmunkhPMisRI32Qc4iRiz425d8vM++2fg==";
   };
-  "babel-preset-expo@58.0.16" = fetchurl {
-    url = "https://registry.npmjs.org/babel-preset-expo/-/babel-preset-expo-58.0.16.tgz";
-    hash = "sha512-n3cyEVtGCmk2QiqCK+ZPtuGggZ/4BIQwNSFpOUeNB3gIobUif9ZHhXhKMMRVoeVHOeRaGt2r6WN14Chq4/jr5g==";
+  "babel-preset-expo@58.0.18" = fetchurl {
+    url = "https://registry.npmjs.org/babel-preset-expo/-/babel-preset-expo-58.0.18.tgz";
+    hash = "sha512-H1mMGvDPiFHsQgOfZ083mhzy/Q1za1VAK9WiLsHrPvUElaXJ0oLyeacMCaboiqEgC8WrZeVFGBNKaHoV98wyiA==";
   };
   "babel-preset-jest@29.6.3" = fetchurl {
     url = "https://registry.npmjs.org/babel-preset-jest/-/babel-preset-jest-29.6.3.tgz";
