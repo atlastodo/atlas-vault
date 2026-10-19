@@ -1,0 +1,54 @@
+import * as Clipboard from "expo-clipboard";
+import { clearCopiedSecret, copyValue, flushClipboard, hasPendingClear } from "./clipboard";
+
+const board = (Clipboard as unknown as { __clipboard: { value: string; options: unknown[] } })
+  .__clipboard;
+
+describe("copying", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    board.value = "";
+    board.options.length = 0;
+  });
+  afterEach(() => jest.useRealTimers());
+
+  it("marks a secret sensitive and clears it after the timeout", async () => {
+    await copyValue("hunter2", { secret: true, clearAfterSeconds: 30 });
+    expect(board.value).toBe("hunter2");
+    expect(board.options.at(-1)).toEqual({ android: { isSensitive: true } });
+    await jest.advanceTimersByTimeAsync(29_000);
+    expect(board.value).toBe("hunter2");
+    await jest.advanceTimersByTimeAsync(1_000);
+    expect(board.value).toBe("");
+    expect(hasPendingClear()).toBe(false);
+  });
+
+  it("leaves something the user copied since alone", async () => {
+    await copyValue("hunter2", { secret: true, clearAfterSeconds: 10 });
+    board.value = "copied elsewhere";
+    await jest.advanceTimersByTimeAsync(10_000);
+    expect(board.value).toBe("copied elsewhere");
+  });
+
+  it("does not clear what is not a secret", async () => {
+    await copyValue("octocat", { secret: false, clearAfterSeconds: 10 });
+    expect(board.options.at(-1)).toEqual({ android: { isSensitive: false } });
+    await jest.advanceTimersByTimeAsync(60_000);
+    expect(board.value).toBe("octocat");
+    expect(hasPendingClear()).toBe(false);
+  });
+
+  it("clears at once on lock, and catches up on a clear that came due in the background", async () => {
+    await copyValue("s1", { secret: true, clearAfterSeconds: 30 });
+    await clearCopiedSecret();
+    expect(board.value).toBe("");
+
+    await copyValue("s2", { secret: true, clearAfterSeconds: 30 });
+    // Timers did not run (a backgrounded phone), but the wall clock moved on.
+    jest.setSystemTime(Date.now() + 60_000);
+    flushClipboard();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(board.value).toBe("");
+  });
+});
