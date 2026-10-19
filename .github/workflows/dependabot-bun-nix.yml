@@ -1,0 +1,48 @@
+# Dependabot updates bun.lock but not nix/bun.nix, the flake's npm dependency set generated from it
+# (`nix:bun-lock`; `lint` fails while it is stale, and the flake's web-dist build needs it). This regenerates it on Dependabot's PRs and pushes the result to the PR branch.
+#
+# `pull_request_target`, because a Dependabot-triggered `pull_request` run gets a read-only token.
+# It runs only for Dependabot's own branches in this repository, and runs nothing from the PR but
+# bun2nix (pinned by the flake.lock, which Dependabot never edits) over the lockfile.
+#
+# A push made with GITHUB_TOKEN starts no new workflow runs, so CI's checks stay on Dependabot's
+# commit; the regenerated file is the only change. Dependabot stops rebasing a PR once another
+# author has committed to it: ask it with `@dependabot recreate`, and this runs again.
+name: Dependabot bun.nix
+
+on:
+  pull_request_target:
+    paths: [bun.lock]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dependabot-bun-nix-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  regenerate:
+    name: Regenerate nix/bun.nix
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+      - name: Regenerate
+        # The same command as `nix:bun-lock`.
+        run: nix run --inputs-from . bun2nix -- -c ../ -o nix/bun.nix
+      - name: Commit and push
+        run: |
+          if git diff --quiet -- nix/bun.nix; then
+            echo "nix/bun.nix is already current"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(deps): regenerate nix/bun.nix" -- nix/bun.nix
+          git push

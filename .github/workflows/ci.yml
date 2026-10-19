@@ -1,0 +1,289 @@
+# Lint, typecheck and test for every push to dev and main and every PR, or on demand. A push or PR
+# only runs the jobs whose files changed (see `changes`); the audit runs when dependencies change
+# and once a week. release.yml calls this same workflow on a v* tag, so a release is gated on the
+# full suite.
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  # Literal "ci-" prefix: when release.yml calls this workflow, github.workflow is the caller's
+  # name, and a group shared with the caller would make this run wait on its own parent.
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  # Bun is pinned in lockstep with devenv (its devenv.lock nixpkgs) -- bump them together.
+  BUN_VERSION: "1.4.2"
+  NODE_VERSION: "26"
+
+jobs:
+  # Decides which jobs run. A tag, a manual run or a call from release.yml runs everything; the
+  # weekly schedule runs only the audit. The branch push of a release commit
+  # (`chore(release): vX.Y.Z`) runs nothing: its tag runs the full suite for that commit.
+  changes:
+    name: Changes
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      lint: ${{ steps.filter.outputs.lint }}
+      core: ${{ steps.filter.outputs.core }}
+      app: ${{ steps.filter.outputs.app }}
+      deps: ${{ steps.filter.outputs.deps }}
+    steps:
+      - id: filter
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          set_all() { for k in lint core app deps; do echo "$k=$1" >>"$GITHUB_OUTPUT"; done; }
+          case "$EVENT" in
+            schedule)
+              set_all false
+              echo "deps=true" >>"$GITHUB_OUTPUT"
+              exit 0
+              ;;
+            push)
+              if [ "$REF_TYPE" = tag ] || [[ "$BEFORE" =~ ^0*$ ]]; then set_all true; exit 0; fi
+              if [[ "$HEAD_MESSAGE" == "chore(release):"* ]]; then set_all false; exit 0; fi
+              files="$(gh api "repos/$REPO/compare/$BEFORE...$SHA" --jq '.files[].filename')"
+              ;;
+            pull_request)
+              files="$(gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename')"
+              ;;
+            *)
+              set_all true
+              exit 0
+              ;;
+          esac
+          # The compare API lists at most 300 files; past that, assume everything changed.
+          if [ "$(grep -c . <<<"$files")" -ge 300 ]; then set_all true; exit 0; fi
+          ci='^\.github/workflows/ci\.yml$'
+          shared="^(package\.json$|bun\.lock$|bunfig\.toml$)|$ci"
+          deps="^(bun\.lock|package\.json|apps/[^/]+/package\.json|packages/[^/]+/package\.json)$|$ci"
+          has() { if grep -qE "$1" <<<"$files"; then echo true; else echo false; fi; }
+          {
+            # Prettier checks Markdown, YAML and JSON too, so every change lints.
+            echo "lint=$(has .)"
+            echo "core=$(has "$shared|^packages/")"
+            echo "app=$(has "$shared|^apps/vault/|^packages/")"
+            echo "deps=$(has "$deps")"
+          } >>"$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+
+  lint:
+    name: Lint
+    needs: changes
+    if: ${{ needs.changes.outputs.lint == 'true' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      # Every workspace that defines `typecheck`: the app and vault-core.
+      - run: bun run --parallel --filter '*' typecheck
+      # The licences of the JS packages the builds ship, against an allow-list.
+      - run: node scripts/third-party-licenses.mjs --check
+      - run: bunx eslint .
+      - run: bunx prettier --check .
+
+  test-core:
+    name: Test (vault-core)
+    needs: changes
+    if: ${{ needs.changes.outputs.core == 'true' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      # The items over the shared rules (core's vectors), the generator, TOTP, auto-lock, vault
+      # tokens and the sync engine.
+      - working-directory: packages/vault-core
+        run: bunx --bun vitest run
+
+  test-app:
+    name: Test (app)
+    needs: changes
+    if: ${{ needs.changes.outputs.app == 'true' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # jest-expo must run under real Node: under Bun's runtime the suites die at load.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      - working-directory: apps/vault
+        run: bun run test -- --ci --maxWorkers=4
+      # The web build is the primary target: it must export.
+      - name: Export the web app
+        working-directory: apps/vault
+        env:
+          CI: "1"
+          EXPO_NO_TELEMETRY: "1"
+        run: bunx expo export --platform web --output-dir "$RUNNER_TEMP/web"
+
+  # The app's vault and the `atlas` CLI against a real server: the core release this app pins
+  # (its server image and its static CLI binary), with the web app served by that server and driven
+  # in Chrome. An item either side writes must show up on the other, the CLI must read the exact
+  # secret the app stored, and the server must refuse a read-only token's writes
+  # (packages/vault-core/e2e, scripts/e2e-web.mjs; locally `e2e:cli`).
+  e2e:
+    name: End to end (server + CLI)
+    needs: changes
+    if: ${{ needs.changes.outputs.app == 'true' || needs.changes.outputs.core == 'true' }}
+    runs-on: ubuntu-24.04
+    env:
+      # The core release whose packages, server and CLI this app is built against.
+      CORE_VERSION: "0.1.11-rc.8"
+      ATLAS_SERVER_IMAGE: ghcr.io/atlastodo/atlas:0.1.11-rc.8
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: atlas
+          POSTGRES_PASSWORD: atlas
+          POSTGRES_DB: atlas
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U atlas" --health-interval 2s --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      - name: Download the atlas CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cli="atlas-$CORE_VERSION-x86_64-unknown-linux-musl"
+          gh release download "v$CORE_VERSION" -R atlastodo/atlas -D "$RUNNER_TEMP/cli" -p "$cli" -p SHA256SUMS.txt
+          (cd "$RUNNER_TEMP/cli" && sha256sum --ignore-missing -c SHA256SUMS.txt)
+          chmod +x "$RUNNER_TEMP/cli/$cli"
+          echo "ATLAS_CLI=$RUNNER_TEMP/cli/$cli" >>"$GITHUB_ENV"
+      - name: Export the web app
+        working-directory: apps/vault
+        env:
+          CI: "1"
+          EXPO_NO_TELEMETRY: "1"
+        run: bunx expo export --platform web --output-dir "$RUNNER_TEMP/web"
+      - name: Start the server (ATLAS_APPS=todo,vault, serving the web app)
+        run: |
+          docker run -d --name atlas --network host \
+            -e DATABASE_URL=postgres://atlas:atlas@127.0.0.1:5432/atlas \
+            -e JWT_SECRET="$(head -c 48 /dev/urandom | base64)" -e PORT=8080 \
+            -e ATLAS_APPS=todo,vault -e ATTACHMENTS_ENABLED=false \
+            -e AUTH_RATE_LIMIT_MAX=100000 -e SYNC_RATE_LIMIT_MAX=100000 \
+            -e SYNC_READ_RATE_LIMIT_MAX=100000 \
+            -e STATIC_DIR=/srv/web -v "$RUNNER_TEMP/web:/srv/web:ro" \
+            "$ATLAS_SERVER_IMAGE"
+          for _ in $(seq 1 60); do curl -sf http://127.0.0.1:8080/health && break; sleep 1; done
+          curl -sf http://127.0.0.1:8080/discovery
+      - name: The vault and the CLI
+        working-directory: packages/vault-core
+        env:
+          ATLAS_E2E_URL: http://127.0.0.1:8080
+        run: bunx --bun vitest run --config vitest.e2e.config.ts
+      - name: The web app in Chrome
+        env:
+          BASE_URL: http://127.0.0.1:8080
+          SCREENSHOT_DIR: ${{ runner.temp }}/screenshots
+        run: CHROMIUM="$(command -v google-chrome || command -v chromium)" node scripts/e2e-web.mjs
+      - if: always()
+        run: docker logs atlas 2>&1 | tail -100
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-screenshots
+          path: ${{ runner.temp }}/screenshots
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # The audit surfaces advisories without blocking: they often sit in un-updatable transitive
+  # deps. Fixable ones go in `overrides` or a dependency bump, never an ignore list.
+  audit:
+    name: Audit (JS)
+    needs: changes
+    if: ${{ needs.changes.outputs.deps == 'true' }}
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun audit
