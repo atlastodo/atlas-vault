@@ -1,6 +1,6 @@
 /**
  * The vault's offline-first store and its sync: a client-core {@link LocalStore} over the
- * device's durable op log (IndexedDB in a browser, SQLite on a phone), kept in step with the
+ * device's durable op log (IndexedDB in the web app), kept in step with the
  * server by a {@link SyncClient} scoped to the vault app.
  *
  * The op log is sealed at rest: client-core's {@link sealPersistence} stores every value as an
@@ -44,7 +44,7 @@ export interface VaultEngineOptions {
   /** This device's id: the clocks' tiebreak, so it must be stable for the device. */
   deviceId: string;
   keys: VaultKeys;
-  /** Entity ids; must be UUIDs (Hermes has no `crypto.randomUUID`, so the app passes one). */
+  /** Entity ids; must be UUIDs. */
   newId?: () => string;
   now?: () => number;
   /** Use the server's realtime socket as well as the poll. */

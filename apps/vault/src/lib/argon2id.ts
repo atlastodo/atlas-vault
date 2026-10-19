@@ -1,29 +1,25 @@
 /**
- * Registers the platform's Argon2id for the password KDF (version 2, `crypto/kdf.ts` in
- * client-core). On Android that is the app's own native module (`modules/atlas-argon2`, Bouncy
- * Castle on a background thread, shared with Atlas Todo). Hermes runs no WebAssembly, so where the
- * module is absent (iOS, Expo Go, Jest) nothing is registered and client-core's pure-JS Argon2id
- * takes over: the same bytes, but many seconds per derivation on a phone.
+ * The browser's Argon2id for the password KDF: hash-wasm's WebAssembly build, several times faster
+ * than client-core's pure-JS fallback. Compiling the module needs `'wasm-unsafe-eval'` in the page's
+ * CSP (the server's and the Electron shell's both allow it); where it cannot compile, the provider
+ * throws and client-core falls back to pure JS.
  *
- * The web build resolves `argon2id.web.ts` instead.
+ * Only the Argon2 build of hash-wasm is imported: its package entry carries every algorithm.
  */
-import { bytesToHex, hexToBytes, setArgon2idProvider } from "@atlastodo/client-core";
-import { Argon2 } from "../../modules/atlas-argon2";
+import { setArgon2idProvider } from "@atlastodo/client-core";
+import { argon2id } from "hash-wasm/dist/argon2.umd.min.js";
 
 export function registerArgon2id(): void {
-  const native = Argon2;
-  if (!native) return;
-  setArgon2idProvider(async (password, salt, params, keyLength) =>
-    hexToBytes(
-      await native.argon2idAsync(
-        bytesToHex(password),
-        bytesToHex(salt),
-        params.memoryKib,
-        params.iterations,
-        params.parallelism,
-        keyLength,
-      ),
-    ),
+  setArgon2idProvider((password, salt, params, keyLength) =>
+    argon2id({
+      password,
+      salt,
+      memorySize: params.memoryKib,
+      iterations: params.iterations,
+      parallelism: params.parallelism,
+      hashLength: keyLength,
+      outputType: "binary",
+    }),
   );
 }
 

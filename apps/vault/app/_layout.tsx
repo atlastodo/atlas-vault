@@ -1,6 +1,5 @@
 import { ActivityIndicator, View } from "react-native";
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../src/auth/AuthContext";
 import { AutoLockGate } from "../src/auth/AutoLockGate";
@@ -64,7 +63,6 @@ function Gate() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <StatusBar style="auto" />
       <PrefsProvider>
         <AuthProvider>
           <Gate />

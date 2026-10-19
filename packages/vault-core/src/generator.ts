@@ -1,8 +1,7 @@
 /**
  * The password generator: random passwords from chosen character classes, and passphrases of
  * BIP39 English words (2048 words, 11 bits each). Every random choice comes from the platform's
- * CSPRNG (`crypto.getRandomValues`: WebCrypto in a browser, expo-crypto's SecureRandom polyfill on
- * a phone) through {@link randomBelow}, which rejection-samples so no choice is biased. There is no
+ * CSPRNG (WebCrypto's `crypto.getRandomValues`) through {@link randomBelow}, which rejection-samples so no choice is biased. There is no
  * fallback to `Math.random`: without a CSPRNG the generator throws.
  */
 

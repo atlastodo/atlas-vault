@@ -1,4 +1,4 @@
-# Pull requests target `dev`; `main` only takes the release PR from `dev` and Dependabot's security
+# Pull requests target `dev`; `main` only takes PRs from `dev` and Dependabot's security
 # updates, which GitHub always opens against `main` (see AGENTS.md). GitHub
 # opens a PR against the default branch, `main`, so a contributor's PR lands there by default.
 # This check fails such a PR with a message saying how to retarget it.
@@ -23,7 +23,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           if [[ "$HEAD_REPO" == "$REPO" && "$HEAD_REF" == "dev" ]]; then
-            echo "Release PR from dev into main."
+            echo "PR from dev into main."
             exit 0
           fi
           if [[ "$HEAD_REPO" == "$REPO" && "$AUTHOR" == "dependabot[bot]" && "$HEAD_REF" == dependabot/* ]]; then

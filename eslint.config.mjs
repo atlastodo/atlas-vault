@@ -11,7 +11,6 @@ export default defineConfig(
       "**/.expo/**",
       "apps/vault/android/**",
       "apps/vault/ios/**",
-      "dist-web/**",
       ".claude/**",
       ".devenv/**",
       // The jest cache CI keeps inside the checkout.

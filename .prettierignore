@@ -3,4 +3,3 @@
 # Lockfiles and generated files
 bun.lock
 nix/bun.nix
-RELEASE_NOTES.md
