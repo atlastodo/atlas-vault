@@ -1,0 +1,6 @@
+# Prettier also skips everything in .gitignore (node_modules, dist*, build outputs, ...).
+
+# Lockfiles and generated files
+bun.lock
+nix/bun.nix
+RELEASE_NOTES.md

@@ -1,0 +1,34 @@
+{
+  "name": "@atlastodo/vault-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Atlas Vault's platform-free core: vault items and folders over client-core (core's shared item rules, at parity with the atlas CLI), the password generator, TOTP, auto-lock, opening the vault app key, vault API tokens and the sync engine",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atlastodo/atlas-vault.git",
+    "directory": "packages/vault-core"
+  },
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts"
+  },
+  "dependencies": {
+    "@atlastodo/client-core": "0.1.11-rc.8",
+    "@atlastodo/shared": "0.1.11-rc.8",
+    "@noble/hashes": "^2.4.0",
+    "@scure/bip39": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "~7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

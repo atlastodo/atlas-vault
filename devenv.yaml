@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://devenv.sh/devenv.schema.json
+inputs:
+  # Its locked revision (devenv.lock) pins Node 26 and Bun 1.4.2: bump it together with
+  # BUN_VERSION in .github/workflows/*.yml.
+  nixpkgs:
+    url: github:cachix/devenv-nixpkgs/rolling
+
+# The Android SDK is unfree.
+allow_unfree: true
