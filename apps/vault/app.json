@@ -10,12 +10,6 @@
       "output": "single",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-sqlite",
-      "expo-secure-store",
-      "expo-router",
-      "expo-status-bar",
-      "expo-build-properties"
-    ]
+    "plugins": ["expo-router"]
   }
 }

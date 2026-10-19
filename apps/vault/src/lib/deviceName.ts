@@ -1,6 +1,3 @@
-import { Platform } from "react-native";
-import Constants from "expo-constants";
-
 /** A user-agent string as a friendly "Browser on OS" label. */
 export function formatUserAgent(ua?: string): string {
   if (!ua) return "Web browser";
@@ -23,11 +20,6 @@ export function formatUserAgent(ua?: string): string {
  * settings): the app and the device, e.g. "Atlas Vault · Chrome on Linux".
  */
 export function detectDeviceName(): string {
-  let device: string;
-  if (Platform.OS === "web") {
-    device = formatUserAgent(typeof navigator !== "undefined" ? navigator.userAgent : undefined);
-  } else {
-    device = Constants.deviceName || (Platform.OS === "android" ? "Android device" : "iOS device");
-  }
-  return `Atlas Vault · ${device}`;
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : undefined;
+  return `Atlas Vault · ${formatUserAgent(ua)}`;
 }
