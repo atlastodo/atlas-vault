@@ -117,6 +117,7 @@ describe("field policy vectors (vault)", () => {
       expiry_required: true,
       max_lifetime_days: 365,
       write_by_default: false,
+      exclusive: true,
     });
   });
 });
