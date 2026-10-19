@@ -4,7 +4,8 @@
 // password masked until revealed, search that never matches a secret, read-only and writing vault
 // tokens made in Settings, the CLI reading the exact password the app stored and refused a write
 // on the read-only token, an item the CLI adds appearing in the open app, the trash, a reload,
-// locking and unlocking, and a session past its auto-lock deadline opening locked.
+// an item written offline surviving a reload (sealed on disk) and syncing later, locking and
+// unlocking, and a session past its auto-lock deadline opening locked.
 //
 // Environment: BASE_URL (the page; a server serving the web export as STATIC_DIR), CHROMIUM (a
 // Chromium binary), ATLAS_CLI (the atlas binary), SCREENSHOT_DIR (optional, keeps screenshots).
@@ -179,6 +180,71 @@ try {
   await page.reload();
   await page.getByRole("button", { name: "Open GitHub" }).waitFor();
   check(true, "a reload before the auto-lock deadline keeps the vault open");
+
+  // Offline: the server's sync routes fail. An item written now is kept on this device, sealed,
+  // across a reload, and reaches the server once it answers again.
+  const offlineSecret = `offline ${Date.now()} secret`;
+  await page.route("**/sync/**", (route) => route.abort());
+  await page.getByRole("button", { name: "New item" }).click();
+  await field(page, "Name").fill("Written offline");
+  await page.getByLabel("password value", { exact: true }).fill(offlineSecret);
+  await page.getByRole("button", { name: "Save" }).first().click();
+  await page.getByLabel("password, hidden").waitFor();
+  await page.getByRole("button", { name: "Back" }).click();
+  await page.waitForTimeout(1_000);
+  await page.reload();
+  await page.getByRole("button", { name: "Open Written offline" }).waitFor({ timeout: 30_000 });
+  check(true, "an item written offline is still there after a reload");
+  await page
+    .getByText(/changes? waiting/)
+    .filter({ visible: true })
+    .first()
+    .waitFor();
+  check(true, "it waits to sync");
+
+  // What the browser keeps on disk for the vault is ciphertext.
+  const onDisk = await page.evaluate(async () => {
+    const dump = [];
+    for (const { name } of await indexedDB.databases()) {
+      if (!name || !name.startsWith("atlas-vault-") || name.endsWith("keystore")) continue;
+      const db = await new Promise((res, rej) => {
+        const r = indexedDB.open(name);
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      });
+      for (const store of db.objectStoreNames) {
+        const rows = await new Promise((res, rej) => {
+          const r = db.transaction(store).objectStore(store).getAll();
+          r.onsuccess = () => res(r.result);
+          r.onerror = () => rej(r.error);
+        });
+        dump.push(...rows);
+      }
+      db.close();
+    }
+    return JSON.stringify(dump);
+  });
+  check(
+    onDisk.length > 1000 &&
+      !onDisk.includes(offlineSecret) &&
+      !onDisk.includes(secret) &&
+      !onDisk.includes("octocat") &&
+      !onDisk.includes("Written offline"),
+    "the vault's IndexedDB holds no name, username or password in plaintext",
+  );
+
+  await page.unroute("**/sync/**");
+  let synced = "";
+  for (let i = 0; i < 20 && synced !== offlineSecret; i++) {
+    try {
+      synced = cli(reader, "vault", "get", "Written offline", "--field", "password").stdout;
+      synced = synced.replace(/\n$/, "");
+    } catch {
+      synced = "";
+    }
+    if (synced !== offlineSecret) await page.waitForTimeout(2_000);
+  }
+  check(synced === offlineSecret, "the offline edit reaches the server once it is back");
 
   // Lock on demand: the keys leave the stored session; the password opens it again.
   await page.getByRole("button", { name: "Lock", exact: true }).click();
