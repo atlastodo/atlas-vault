@@ -16,7 +16,7 @@ A **test harness for Atlas core**, not a product: a password-manager-shaped clie
 
 - All dev commands (`test:all`, `e2e:cli`, `lint`, `fmt`, `nix:bun-lock`, `web:dev`, `web:export`) are devenv scripts in `devenv.nix` — run them inside `devenv shell` (or `devenv shell -- <script>`). The root `package.json` has **no** scripts. (The full suite is `test:all`, not `test`, which collides with the shell builtin.)
 - Bun is the package manager (`bun.lock` committed, lockfile version 1 — bun2nix reads no other; CI installs with `--frozen-lockfile`); Node 26 is the runtime. Bun is pinned to **1.4.2** in devenv (the nixpkgs of `devenv.lock`) and `BUN_VERSION` in `.github/workflows/*.yml` — bump them together.
-- The root `typescript` devDependency is TypeScript 6.0; the workspaces typecheck with their own TypeScript 7.
+- TypeScript is 7 (the native compiler) everywhere: the root and both workspaces. Its npm package has no JS compiler API, which is why the linter is oxlint, not ESLint with typescript-eslint.
 - The core packages come from npm at an exact version (now `0.1.11-rc.9`): `@atlastodo/client-core` and `@atlastodo/shared` (the vault item rules). Move them by hand with a core release (Dependabot ignores them), together with `CORE_VERSION`/`ATLAS_SERVER_IMAGE` in `ci.yml` (the e2e job's server image and CLI binary). The core fixtures the tests replay (`vault_item_vectors.json`, `field_policy_vectors.json`) are read from those packages, so a bump picks them up.
 - A server for development: in the core checkout, `devenv up` and `ATLAS_APPS=todo,vault cargo run -p atlas-server`; `EXPO_PUBLIC_API_URL` defaults to `http://localhost:8080`.
 
