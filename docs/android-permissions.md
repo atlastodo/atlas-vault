@@ -22,7 +22,7 @@ Dependencies declare these, but the app does not use what they guard, so `app.js
 (`android.blockedPermissions`):
 
 - Storage (`READ_EXTERNAL_STORAGE`, `WRITE_EXTERNAL_STORAGE`): the vault keeps nothing on shared
-  storage (its items stay in memory, its session in the keychain).
+  storage (its encrypted database is app-private, its session in the keychain).
 - Audio (`RECORD_AUDIO`, `MODIFY_AUDIO_SETTINGS`), `VIBRATE`: the app plays no sound and gives no
   haptic feedback.
 - `SYSTEM_ALERT_WINDOW`: a development-build overlay.

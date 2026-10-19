@@ -3,54 +3,11 @@
  * one, only stores and replays ops: what reaches it is ciphertext under the vault key, in a
  * vault-scoped session, and the other device opens it.
  */
-import {
-  MemoryPersistence,
-  generateUserKeypair,
-  randomBytes,
-  type FetchLike,
-} from "@atlastodo/client-core";
+import { MemoryPersistence } from "@atlastodo/client-core";
 import { describe, expect, it } from "vitest";
 import { createVaultApiClient, type VaultKeys } from "./account";
 import { VaultEngine } from "./engine";
-
-interface WireOp {
-  id: string;
-  entity: string;
-  entity_id: string;
-  field?: string;
-  value?: unknown;
-}
-
-function fakeServer() {
-  const log: WireOp[] = [];
-  const headers: Record<string, string>[] = [];
-  const json = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), {
-      status,
-      headers: { "content-type": "application/json" },
-    });
-  const fetch: FetchLike = async (input, init) => {
-    const url = new URL(String(input));
-    headers.push(Object.fromEntries(new Headers(init?.headers).entries()));
-    if (url.pathname === "/sync/push" && init?.method === "POST") {
-      const { operations } = JSON.parse(String(init.body)) as { operations: WireOp[] };
-      const from = log.length;
-      for (const op of operations) if (!log.some((o) => o.id === op.id)) log.push(op);
-      return json({ cursor: log.length, applied: operations.length, from });
-    }
-    if (url.pathname === "/sync/pull") {
-      const since = Number(url.searchParams.get("since"));
-      return json({ operations: log.slice(since), cursor: log.length });
-    }
-    return json({ error: "not found" }, 404);
-  };
-  return { log, headers, fetch };
-}
-
-function vaultKeys(): VaultKeys {
-  const identity = generateUserKeypair();
-  return { appKey: randomBytes(32), privateKey: identity.secretKey, publicKey: identity.publicKey };
-}
+import { fakeServer, vaultKeys } from "./fakeServer.testutil";
 
 function device(server: ReturnType<typeof fakeServer>, keys: VaultKeys, id: string) {
   const api = createVaultApiClient({
@@ -58,7 +15,13 @@ function device(server: ReturnType<typeof fakeServer>, keys: VaultKeys, id: stri
     token: "access",
     fetch: server.fetch,
   });
-  return new VaultEngine({ api, persistence: new MemoryPersistence(), deviceId: id, keys });
+  return new VaultEngine({
+    api,
+    persistence: new MemoryPersistence(),
+    userId: "user",
+    deviceId: id,
+    keys,
+  });
 }
 
 describe("VaultEngine", () => {
@@ -142,12 +105,12 @@ describe("VaultEngine", () => {
     const keys = vaultKeys();
     const persistence = new MemoryPersistence();
     const api = createVaultApiClient({ baseUrl: "http://atlas.test", fetch: server.fetch });
-    const first = new VaultEngine({ api, persistence, deviceId: "d", keys });
+    const first = new VaultEngine({ api, persistence, userId: "user", deviceId: "d", keys });
     await first.start();
     const made = first.items.create({ name: "Written offline", type: "note" });
     await first.store.flush();
     // A second engine on the same log (the app relaunched) sees the edit before any sync.
-    const again = new VaultEngine({ api, persistence, deviceId: "d", keys });
+    const again = new VaultEngine({ api, persistence, userId: "user", deviceId: "d", keys });
     await again.start();
     expect(again.items.get(made.id)?.name).toBe("Written offline");
     expect(again.pendingCount()).toBeGreaterThan(0);

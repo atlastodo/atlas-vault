@@ -28,6 +28,7 @@ import {
   type VaultKeys,
   type VaultSession,
 } from "@atlastodo/vault-core";
+import { deleteDatabase } from "../data/persistence";
 import { clearCopiedSecret } from "../lib/clipboard";
 import { detectDeviceName } from "../lib/deviceName";
 import { getInstallKey } from "../lib/installKey";
@@ -48,12 +49,14 @@ import {
  * - The session is restored before anything renders (`restored`). A session without its vault
  *   keys is locked: the app asks for the password (`unlock`) before anything decrypts or syncs.
  *   A stored session past its auto-lock deadline (`lockAt`) is locked on restore, and stored so.
- * - `lock` drops the vault keys from memory and from the stored session (the vault's decrypted
- *   items live only in memory, so they go with the provider that held them) and clears a copied
- *   secret from the clipboard. A lock in one browser tab locks the others.
+ * - `lock` drops the vault keys from memory and from the stored session (the decrypted items go
+ *   with the provider that held them; the database on disk stays sealed under a key derived from
+ *   the vault key) and clears a copied secret from the clipboard. A lock in one browser tab locks
+ *   the others.
  * - Rotated tokens are merged into the session as it is now and persisted (the vault keys are
  *   never in an auth response, so the merge keeps them).
- * - Signing out ends the device session on the server and forgets it here.
+ * - Signing out ends the device session on the server, forgets it here and deletes this device's
+ *   (sealed) vault database.
  */
 export interface AuthValue {
   restored: boolean;
@@ -283,10 +286,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
+    const current = sessionRef.current;
     await apiRef.current?.logout().catch(() => {});
     await dropSession().catch(() => {});
     await clearCopiedSecret();
     clearLocal();
+    if (current) {
+      // Sealed, but no use to anyone once signed out.
+      await deleteDatabase(current.user.id).catch((err) =>
+        console.warn("[atlas-vault] could not delete the local vault:", err),
+      );
+    }
   }, [clearLocal]);
 
   const changeServerUrl = useCallback(

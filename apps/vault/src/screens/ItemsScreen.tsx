@@ -33,7 +33,7 @@ export function ItemsScreen({
   onLock: () => void;
 }) {
   const p = usePalette();
-  const { items, version, loaded } = useVault();
+  const { items, version, loaded, notice } = useVault();
   const [search, setSearch] = useState("");
   const [scope, setScope] = useState<Scope>({ kind: "all" });
   const [type, setType] = useState<string | null>(null);
@@ -78,6 +78,7 @@ export function ItemsScreen({
         }
       />
       <SyncLine />
+      {notice ? <Muted>{notice}</Muted> : null}
       <TextInput
         accessibilityLabel="Search the vault"
         placeholder="Search names, sites, usernames, tags"

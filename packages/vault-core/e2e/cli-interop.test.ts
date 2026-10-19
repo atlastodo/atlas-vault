@@ -84,8 +84,9 @@ async function atlas(token: string, args: string[], stdin?: string): Promise<unk
   return JSON.parse(run.stdout);
 }
 
-function engineFor(api: ApiClient, keys: VaultKeys, deviceId: string): VaultEngine {
-  return new VaultEngine({ api, persistence: new MemoryPersistence(), deviceId, keys });
+/** An app engine; the e2e engines keep their log in memory (the sealed disk store has its own tests). */
+function engineFor(api: ApiClient, keys: VaultKeys, deviceId: string, userId = "e2e"): VaultEngine {
+  return new VaultEngine({ api, persistence: new MemoryPersistence(), userId, deviceId, keys });
 }
 
 /** An app item as the CLI prints it: without `locked`, with its folder's name. */
