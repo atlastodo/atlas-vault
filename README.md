@@ -27,7 +27,7 @@ Everything runs in the devenv shell (`devenv shell`, or `devenv shell -- <script
 ```sh
 bun install
 test:all         # vault-core (vitest) and the app (jest-expo)
-lint             # typecheck, ESLint, Prettier, licences, nix/bun.nix
+lint             # typecheck, oxlint, Prettier, licences, nix/bun.nix
 e2e:cli          # vault-core and the atlas CLI against a real server (E2E_WEB=1: also a browser)
 ```
 

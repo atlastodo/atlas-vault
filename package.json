@@ -18,14 +18,11 @@
   "engines": {
     "node": ">=26"
   },
-  "//typescript": "typescript-eslint supports TypeScript below 6.1 only, so the root (where ESLint runs) has TypeScript 5.9 for it; the workspaces typecheck with TypeScript 7 (their own devDependency). Drop this once typescript-eslint supports TypeScript 7.",
   "devDependencies": {
-    "eslint": "^10.13.0",
-    "eslint-plugin-react-hooks": "^7.1.1",
+    "oxlint": "1.88.0",
     "playwright-core": "^1.64.1",
     "prettier": "3.9.10",
-    "typescript": "6.0.3",
-    "typescript-eslint": "^8.71.2"
+    "typescript": "6.0.3"
   },
   "overrides": {
     "uuid": "11.1.1",
