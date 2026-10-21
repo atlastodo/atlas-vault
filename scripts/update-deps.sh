@@ -70,6 +70,13 @@ if [[ -n "$core_old" ]]; then
     echo "core $core_old -> $core_new"
     mapfile -t files < <(git grep -lF "$core_old" -- ':!bun.lock' ':!nix/bun.nix' ':!RELEASE_NOTES.md')
     sed -i -E "/atlastodo|atlas:|CORE_VERSION|[Cc]ore/s/(^|[^0-9.])${core_old//./\\.}([^0-9A-Za-z.-]|$)/\1${core_new}\2/g" "${files[@]}"
+    # Fixtures copied from core (`vectors:sync`) follow the release they come from.
+    if [[ -f scripts/sync-vectors.mjs ]]; then
+      tmp="$(mktemp -d)"
+      git clone -q --depth 1 --branch "v$core_new" https://github.com/atlastodo/atlas.git "$tmp"
+      node scripts/sync-vectors.mjs "$tmp" HEAD
+      rm -rf "$tmp"
+    fi
   else
     echo "core stays at $core_old"
   fi
