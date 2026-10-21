@@ -98,13 +98,17 @@ in
     cd "$DEVENV_ROOT"
     nix run --inputs-from . bun2nix -- -c ../ -o nix/bun.nix
   '';
+  # Refresh everything Dependabot cannot update (devenv/flake locks, the Bun pins, the whole
+  # bun.lock, the Expo SDK packages, the core pin, nix/bun.nix): scripts/update-deps.sh, which
+  # .github/workflows/deps-refresh.yml runs weekly.
+  scripts."deps:update".exec = ''bash "$DEVENV_ROOT/scripts/update-deps.sh" "$@"'';
 
   enterShell = ''
     if [ -n "''${DEVENV_PROFILE:-}" ]; then
       export PATH="$DEVENV_PROFILE/bin:$PATH"
     fi
     echo "Atlas Vault dev shell -- node $(node --version), bun $(bun --version)"
-    echo "Atlas Vault is a test harness for Atlas core. Scripts: test:all, e2e:cli, lint, fmt, web:dev, web:export"
+    echo "Atlas Vault is a test harness for Atlas core. Scripts: test:all, e2e:cli, lint, fmt, deps:update, web:dev, web:export"
   '';
 
   enterTest = ''
