@@ -33,7 +33,7 @@ export function ItemScreen({
   const { items, version, kick } = useVault();
   const item = useMemo(
     () => items.get(id),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [items, version, id],
   );
 

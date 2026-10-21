@@ -1,6 +1,5 @@
 import { ActivityIndicator, View } from "react-native";
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "../src/auth/AuthContext";
 import { AutoLockGate } from "../src/auth/AutoLockGate";
@@ -30,7 +29,8 @@ function Loading() {
 /**
  * Who sees what: the sign-in screen without a session, the recovery phrase once after sign-up,
  * the unlock screen for a locked session (no vault keys), else the vault under auto-lock. Locking
- * unmounts the vault: its store, its decrypted items and every revealed secret go with it.
+ * unmounts the vault: its decrypted items and every revealed secret go with it, and its sealed
+ * database is closed.
  */
 function Gate() {
   const auth = useAuth();
@@ -46,6 +46,7 @@ function Gate() {
   return (
     <VaultProvider
       api={auth.api}
+      userId={auth.session.user.id}
       deviceId={auth.session.deviceId}
       keys={auth.keys}
       fallback={<Loading />}
@@ -62,7 +63,6 @@ function Gate() {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <StatusBar style="auto" />
       <PrefsProvider>
         <AuthProvider>
           <Gate />

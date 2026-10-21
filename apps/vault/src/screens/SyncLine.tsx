@@ -13,7 +13,9 @@ export function syncSummary(s: {
   const waiting = s.pending > 0 ? `${s.pending} change${s.pending === 1 ? "" : "s"} waiting` : "";
   if (s.status === "syncing") return "Syncing…";
   if (s.lastError || s.status === "offline") {
-    return waiting ? `Offline · ${waiting} (keep the vault unlocked until they sync)` : "Offline";
+    return waiting
+      ? `Offline · ${waiting}, saved on this device`
+      : "Offline · your vault is saved on this device";
   }
   if (s.status === "throttled") return "The server asked to slow down; syncing shortly";
   if (waiting) return waiting;

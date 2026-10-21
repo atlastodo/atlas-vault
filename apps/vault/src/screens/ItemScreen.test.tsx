@@ -4,8 +4,7 @@ import { clearCopiedSecret } from "../lib/clipboard";
 import { memoryVault } from "../test/vault";
 import { ItemScreen } from "./ItemScreen";
 
-const board = (Clipboard as unknown as { __clipboard: { value: string; options: unknown[] } })
-  .__clipboard;
+const board = (Clipboard as unknown as { __clipboard: { value: string } }).__clipboard;
 
 async function setup() {
   const vault = memoryVault();
@@ -43,11 +42,10 @@ describe("ItemScreen", () => {
     expect(screen.queryByText("hunter2")).toBeNull();
   });
 
-  it("copies a secret as sensitive", async () => {
+  it("copies a secret", async () => {
     await setup();
     await fireEvent.press(screen.getByRole("button", { name: "Copy password" }));
     expect(board.value).toBe("hunter2");
-    expect(board.options.at(-1)).toEqual({ android: { isSensitive: true } });
   });
 
   it("shows a TOTP field as a code, never its seed", async () => {

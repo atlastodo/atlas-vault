@@ -1,6 +1,6 @@
 {
   "name": "@atlastodo/vault-core",
-  "version": "0.1.0",
+  "version": "0.1.0-rc.1",
   "private": true,
   "description": "Atlas Vault's platform-free core: vault items and folders over client-core (core's shared item rules, at parity with the atlas CLI), the password generator, TOTP, auto-lock, opening the vault app key, vault API tokens and the sync engine",
   "license": "AGPL-3.0-only",
@@ -21,14 +21,15 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
-    "@atlastodo/client-core": "0.1.11-rc.8",
-    "@atlastodo/shared": "0.1.11-rc.8",
+    "@atlastodo/client-core": "0.1.11",
+    "@atlastodo/shared": "0.1.11",
     "@noble/hashes": "^2.4.0",
     "@scure/bip39": "^2.4.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "fake-indexeddb": "^6.0.0",
     "typescript": "~7.0.2",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   }
 }

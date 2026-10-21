@@ -4,6 +4,3 @@ inputs:
   # BUN_VERSION in .github/workflows/*.yml.
   nixpkgs:
     url: github:cachix/devenv-nixpkgs/rolling
-
-# The Android SDK is unfree.
-allow_unfree: true

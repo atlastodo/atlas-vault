@@ -22,6 +22,7 @@ export function memoryVault(now: () => number = Date.now) {
       status: "idle",
       pending: store.unsyncedOps().length,
       loaded: true,
+      notice: null,
       lastError: null,
       lastSyncAt: null,
       kick: () => {

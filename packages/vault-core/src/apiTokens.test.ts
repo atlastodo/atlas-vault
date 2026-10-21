@@ -98,6 +98,7 @@ describe("vault API tokens", () => {
         expiry_required: true,
         max_lifetime_days: 60,
         write_by_default: false,
+        exclusive: true,
       }),
     ).toEqual([7, 30, 60]);
   });

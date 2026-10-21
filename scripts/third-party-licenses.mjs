@@ -153,7 +153,7 @@ function writeNotices(file) {
       out.push(...names, "", text, "", "-".repeat(78), "");
     }
   };
-  section("JavaScript packages (web, Android and desktop apps)", jsPackages());
+  section("JavaScript packages (the web app)", jsPackages());
   fs.writeFileSync(file, out.join("\n"));
   console.log(`Wrote ${file} (${(fs.statSync(file).size / 1024).toFixed(0)} KiB)`);
 }

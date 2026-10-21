@@ -33,7 +33,7 @@ export function ItemsScreen({
   onLock: () => void;
 }) {
   const p = usePalette();
-  const { items, version, loaded } = useVault();
+  const { items, version, loaded, notice } = useVault();
   const [search, setSearch] = useState("");
   const [scope, setScope] = useState<Scope>({ kind: "all" });
   const [type, setType] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export function ItemsScreen({
   const { folders, tags, total } = useMemo(
     () => ({ folders: items.folders(), tags: items.tags(), total: items.list().length }),
     // `version` bumps on every store change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
     [items, version],
   );
   const shown = useMemo(() => {
@@ -51,7 +51,7 @@ export function ItemsScreen({
     if (scope.kind === "folder") query.folder = scope.id;
     if (scope.kind === "none") query.folder = "none";
     return items.list(query);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [items, version, search, scope, type, tag]);
 
   const scopeChip = (label: string, s: Scope) => (
@@ -78,6 +78,7 @@ export function ItemsScreen({
         }
       />
       <SyncLine />
+      {notice ? <Muted>{notice}</Muted> : null}
       <TextInput
         accessibilityLabel="Search the vault"
         placeholder="Search names, sites, usernames, tags"

@@ -2,8 +2,6 @@
  * Jest setup: the libraries' own doubles for native modules a node process lacks. The app's own
  * modules are not mocked here.
  */
-jest.requireActual("./src/lib/polyfillCrypto");
-
 // Tests assume the default server URL; a CI that sets EXPO_PUBLIC_API_URL must not change that.
 delete process.env.EXPO_PUBLIC_API_URL;
 
@@ -17,14 +15,13 @@ jest.mock(
 );
 
 // The clipboard as a value in memory (the native module is absent under jest); tests read
-// `__clipboard` to see what was copied, with which options, and whether it was cleared.
+// `__clipboard` to see what was copied and whether it was cleared.
 jest.mock("expo-clipboard", () => {
-  const state = { value: "", options: [] as unknown[] };
+  const state = { value: "" };
   return {
     __clipboard: state,
-    setStringAsync: jest.fn(async (text: string, options?: unknown) => {
+    setStringAsync: jest.fn(async (text: string) => {
       state.value = text;
-      state.options.push(options);
       return true;
     }),
     getStringAsync: jest.fn(async () => state.value),

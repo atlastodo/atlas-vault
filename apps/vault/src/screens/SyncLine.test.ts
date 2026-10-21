@@ -7,8 +7,11 @@ describe("syncSummary", () => {
     expect(syncSummary({ ...base, lastSyncAt: 1 })).toBe("Synced · end-to-end encrypted");
     expect(syncSummary({ ...base, status: "syncing" })).toBe("Syncing…");
     expect(syncSummary({ ...base, pending: 2 })).toBe("2 changes waiting");
+    expect(syncSummary({ ...base, status: "offline" })).toBe(
+      "Offline · your vault is saved on this device",
+    );
     expect(syncSummary({ ...base, pending: 1, lastError: "x" })).toBe(
-      "Offline · 1 change waiting (keep the vault unlocked until they sync)",
+      "Offline · 1 change waiting, saved on this device",
     );
   });
 });
