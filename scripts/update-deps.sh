@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Refreshes every dependency Dependabot can't reach, so nothing sits on an old version:
 #   devenv.lock (nixpkgs: Node, Bun, …) and flake.lock(s); the Bun pins in the workflows, the
-#   Dockerfile and the docs, which follow the Bun the devenv nixpkgs ships; the core pin; the whole
+#   Dockerfile and the docs, which follow the Bun the devenv nixpkgs ships; the core pin (in the
+#   apps) and the app web pins (apps.lock.json, in core); the whole
 #   bun.lock, transitive dependencies and overrides included; each Expo app's SDK-managed packages
 #   (`expo install --fix`); Cargo.lock; and nix/bun.nix. Steps for files a repo doesn't have are
 #   skipped. Run by `.github/workflows/deps-refresh.yml` weekly, or locally as `deps:update`.
@@ -114,6 +115,25 @@ if [[ -n "$core_old" ]]; then
   else
     echo "core stays at $core_old"
   fi
+fi
+
+# The app web builds core's image and flake serve (apps.lock.json) follow each app's latest stable
+# release; scripts/pin-app-web.mjs checks the build and its notices against the release's sums.
+if [[ -f apps.lock.json && -f scripts/pin-app-web.mjs ]]; then
+  step "apps.lock.json"
+  while read -r app repo pinned; do
+    latest="$(gh api "repos/$repo/releases/latest" --jq .tag_name)"
+    latest="${latest#v}"
+    if [[ "$latest" != "$pinned" ]]; then
+      echo "$app web $pinned -> $latest"
+      node scripts/pin-app-web.mjs "$latest" --repo "$repo" --app "$app"
+    else
+      echo "$app web stays at $pinned"
+    fi
+  done < <(bun -e '
+    const lock = await Bun.file("apps.lock.json").json();
+    for (const [app, pin] of Object.entries(lock))
+      if (pin?.url) console.log(app, new URL(pin.url).pathname.split("/").slice(1, 3).join("/"), pin.version)')
 fi
 
 if [[ -f bun.lock ]]; then
