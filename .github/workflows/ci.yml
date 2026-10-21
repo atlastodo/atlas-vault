@@ -187,8 +187,8 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       # The core release whose packages, server and CLI this app is built against.
-      CORE_VERSION: "0.1.11-rc.9"
-      ATLAS_SERVER_IMAGE: ghcr.io/atlastodo/atlas:0.1.11-rc.9
+      CORE_VERSION: "0.1.11"
+      ATLAS_SERVER_IMAGE: ghcr.io/atlastodo/atlas:0.1.11
     services:
       postgres:
         image: postgres:16-alpine

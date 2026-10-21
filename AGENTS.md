@@ -14,11 +14,13 @@ A **test harness for Atlas core**, not a product: a password-manager-shaped clie
 
 ## Dev environment
 
-- All dev commands (`test:all`, `e2e:cli`, `lint`, `fmt`, `nix:bun-lock`, `web:dev`, `web:export`) are devenv scripts in `devenv.nix` — run them inside `devenv shell` (or `devenv shell -- <script>`). The root `package.json` has **no** scripts. (The full suite is `test:all`, not `test`, which collides with the shell builtin.)
-- Bun is the package manager (`bun.lock` committed, lockfile version 1 — bun2nix reads no other; CI installs with `--frozen-lockfile`); Node 26 is the runtime. Bun is pinned to **1.4.2** in devenv (the nixpkgs of `devenv.lock`) and `BUN_VERSION` in `.github/workflows/*.yml` — bump them together.
+- All dev commands (`test:all`, `e2e:cli`, `lint`, `fmt`, `nix:bun-lock`, `deps:update`, `web:dev`, `web:export`) are devenv scripts in `devenv.nix` — run them inside `devenv shell` (or `devenv shell -- <script>`). The root `package.json` has **no** scripts. (The full suite is `test:all`, not `test`, which collides with the shell builtin.)
+- Bun is the package manager (`bun.lock` committed, lockfile version 1 — bun2nix reads no other; CI installs with `--frozen-lockfile`); Node 26 is the runtime. Bun is pinned to **1.4.2** in devenv (the nixpkgs of `devenv.lock`) and `BUN_VERSION` in `.github/workflows/*.yml`, in lockstep: `deps:update` moves the workflow pins to the Bun that nixpkgs ships.
 - TypeScript is 7 (the native compiler) everywhere: the root and both workspaces. Its npm package has no JS compiler API, which is why the linter is oxlint, not ESLint with typescript-eslint.
-- The core packages come from npm at an exact version (now `0.1.11-rc.9`): `@atlastodo/client-core` and `@atlastodo/shared` (the vault item rules). Move them by hand with a core release (Dependabot ignores them), together with `CORE_VERSION`/`ATLAS_SERVER_IMAGE` in `ci.yml` (the e2e job's server image and CLI binary). The core fixtures the tests replay (`vault_item_vectors.json`, `field_policy_vectors.json`) are read from those packages, so a bump picks them up.
+- The core packages come from npm at an exact version (now `0.1.11`): `@atlastodo/client-core` and `@atlastodo/shared` (the vault item rules). They follow the newest core release (rc or stable), moved by `deps:update` (Dependabot ignores them) together with `CORE_VERSION`/`ATLAS_SERVER_IMAGE` in `ci.yml` (the e2e job's server image and CLI binary). The core fixtures the tests replay (`vault_item_vectors.json`, `field_policy_vectors.json`) are read from those packages, so a bump picks them up.
 - A server for development: in the core checkout, `devenv up` and `ATLAS_APPS=todo,vault cargo run -p atlas-server`; `EXPO_PUBLIC_API_URL` defaults to `http://localhost:8080`.
+
+- Nothing is held back on purpose. Dependabot (`.github/dependabot.yml`, weekly, to `dev`, a 3-day `cooldown`) covers direct dependencies and Actions; everything else (`devenv.lock`, `flake.lock`, the Bun pins, the whole `bun.lock` with transitives and the `overrides`, the Expo SDK's packages via `expo install --fix`, the core pin, `nix/bun.nix`) is `deps:update` (`scripts/update-deps.sh`), which `deps-refresh.yml` runs weekly and opens as one PR from `chore/deps-refresh`. A new Expo SDK major is a migration, flagged as an issue. `overrides` are ranges, never exact pins.
 
 ## Verification
 

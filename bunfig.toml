@@ -1,3 +1,7 @@
 [test]
 # Tests run under vitest (packages/vault-core) and jest-expo (apps/vault), never `bun test`.
 pathIgnorePatterns = ["**"]
+
+[install]
+# Our own core packages skip the release-age check scripts/update-deps.sh applies (`deps:update`).
+minimumReleaseAgeExcludes = ["@atlastodo/client-core", "@atlastodo/shared"]
