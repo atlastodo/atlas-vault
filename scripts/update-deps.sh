@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Refreshes every dependency Dependabot can't reach, so nothing sits on an old version:
 #   devenv.lock (nixpkgs: Node, Bun, …) and flake.lock(s); the Bun pins in the workflows, the
-#   Dockerfile and the docs, which follow the Bun the devenv nixpkgs ships; the whole bun.lock,
-#   transitive dependencies and overrides included; each Expo app's SDK-managed packages
+#   Dockerfile and the docs, which follow the Bun the devenv nixpkgs ships; the core pin; the whole
+#   bun.lock, transitive dependencies and overrides included; each Expo app's SDK-managed packages
 #   (`expo install --fix`); Cargo.lock; and nix/bun.nix. Steps for files a repo doesn't have are
 #   skipped. Run by `.github/workflows/deps-refresh.yml` weekly, or locally as `deps:update`.
 #
 # npm releases must be at least DEPS_MIN_AGE seconds old (default 3 days), a buffer against
-# hijacked releases; `[install] minimumReleaseAgeExcludes` in bunfig.toml lists our own packages.
-# Nix inputs and crates have no such check.
+# hijacked releases. Exempt: the packages in bunfig.toml's `minimumReleaseAgeExcludes` (our own)
+# and exact pins, which `bun update` can't move anyway. Nix inputs and crates have no such check.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -16,6 +16,40 @@ age="${DEPS_MIN_AGE:-259200}"
 step() { printf '\n==> %s\n' "$*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
 devenv() { if have devenv; then command devenv "$@"; else nix run nixpkgs#devenv -- "$@"; fi; }
+
+# Runs a command with the release age in force: bunfig.toml gets `minimumReleaseAge` and, added to
+# its excludes, every exactly pinned dependency of the workspace; it is restored afterwards.
+with_release_age() {
+  local bak rc=0
+  bak="$(mktemp)"
+  [[ -f bunfig.toml ]] && cp bunfig.toml "$bak"
+  DEPS_AGE="$age" bun -e '
+    const age = process.env.DEPS_AGE;
+    const root = await Bun.file("package.json").json();
+    const workspaces = Array.isArray(root.workspaces) ? root.workspaces : (root.workspaces?.packages ?? []);
+    const manifests = ["package.json"];
+    for (const w of workspaces)
+      for await (const f of new Bun.Glob(`${w}/package.json`).scan()) manifests.push(f);
+    const exact = new Set();
+    for (const m of manifests) {
+      const p = await Bun.file(m).json();
+      for (const deps of [p.dependencies, p.devDependencies, p.optionalDependencies])
+        for (const [name, spec] of Object.entries(deps ?? {})) if (/^\d/.test(spec)) exact.add(name);
+    }
+    const file = Bun.file("bunfig.toml");
+    let toml = (await file.exists()) ? await file.text() : "";
+    const own = /^minimumReleaseAgeExcludes = (\[.*\])$/m.exec(toml);
+    const excludes = [...new Set([...(own ? JSON.parse(own[1]) : []), ...exact])];
+    const lines = `minimumReleaseAge = ${age}\nminimumReleaseAgeExcludes = ${JSON.stringify(excludes)}`;
+    if (own) toml = toml.replace(own[0], "");
+    toml = /^\[install\]$/m.test(toml) ? toml.replace(/^\[install\]$/m, `[install]\n${lines}`) : `${toml}\n[install]\n${lines}\n`;
+    await Bun.write(file, toml);
+  '
+  "$@" || rc=$?
+  if [[ -s "$bak" ]]; then cp "$bak" bunfig.toml; else rm -f bunfig.toml; fi
+  rm -f "$bak"
+  return "$rc"
+}
 
 if [[ -f devenv.lock ]]; then
   step "devenv.lock"
@@ -57,7 +91,7 @@ if [[ -f devenv.lock ]]; then
   fi
 fi
 
-# The core release this app builds on is pinned at one exact version across the manifests, CI's
+# The core release an app builds on is pinned at one exact version across the manifests, CI's
 # server image and CLI, devenv and the docs, so it moves here, everywhere at once, rather than
 # through Dependabot. It follows the newest core release, rc or stable.
 core_old="$(git grep -hoE '"@atlastodo/client-core": "[0-9][^"]*"' -- '*package.json' | head -1 | cut -d'"' -f4)" || true
@@ -85,30 +119,26 @@ fi
 if [[ -f bun.lock ]]; then
   step "bun.lock"
   bun install >/dev/null
-  bun update --minimum-release-age "$age"
+  with_release_age bun update
 fi
 
 # The Expo SDK decides the versions of its native modules (react, react-native, expo-*, …), which
 # Dependabot therefore leaves alone. First move to the SDK's newest patch release, as Expo's API
 # names it; then, offline, align the native modules with whichever `expo` is installed (which also
 # undoes anything `bun update` moved past the SDK). A new SDK major is a migration, done by hand.
-# `expo install` runs `bun add`, so the release age is set in bunfig.toml for the duration: when
-# the release Expo asks for is younger, the first pass is skipped and waits for the next run.
+# When the release Expo asks for is younger than the release age, the first pass waits a week.
 for app in apps/*/; do
   [[ -f "${app}app.json" ]] && grep -q '"expo":' "${app}package.json" || continue
   step "Expo SDK packages in $app"
   bak="$(mktemp -d)"
-  cp bunfig.toml "$bak/"
-  sed -i "s/^\[install\]$/&\nminimumReleaseAge = $age/" bunfig.toml
   cp bun.lock "${app}package.json" "$bak/"
-  if ! (cd "$app" && CI=1 bunx expo install --fix); then
-    echo "::warning::expo install --fix in $app needs a release younger than the cooldown; next run"
+  if ! with_release_age bash -c 'cd "$1" && CI=1 bunx expo install --fix' _ "$app"; then
+    echo "::warning::expo install --fix in $app needs a release younger than the release age; next run"
     cp "$bak/bun.lock" bun.lock
     cp "$bak/package.json" "${app}package.json"
   fi
-  (cd "$app" && CI=1 EXPO_OFFLINE=1 bunx expo install --fix)
-  cp "$bak/bunfig.toml" bunfig.toml
   rm -rf "$bak"
+  with_release_age bash -c 'cd "$1" && CI=1 EXPO_OFFLINE=1 bunx expo install --fix' _ "$app"
 done
 
 if [[ -f Cargo.lock ]]; then

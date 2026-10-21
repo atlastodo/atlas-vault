@@ -47,7 +47,9 @@
   "expo": {
     "install": {
       "exclude": [
-        "typescript"
+        "typescript",
+        "@types/react",
+        "@types/react-dom"
       ]
     }
   }
