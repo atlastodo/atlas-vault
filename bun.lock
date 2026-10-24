@@ -15,7 +15,7 @@
       "name": "@atlastodo/vault-app",
       "version": "0.1.0-rc.1",
       "dependencies": {
-        "@atlastodo/client-core": "0.1.11",
+        "@atlastodo/client-core": "0.1.14-rc.1",
         "@atlastodo/vault-core": "workspace:*",
         "@expo/metro-runtime": "~58.0.14",
         "@react-native-async-storage/async-storage": "2.2.0",
@@ -48,8 +48,8 @@
       "name": "@atlastodo/vault-core",
       "version": "0.1.0-rc.1",
       "dependencies": {
-        "@atlastodo/client-core": "0.1.11",
-        "@atlastodo/shared": "0.1.11",
+        "@atlastodo/client-core": "0.1.14-rc.1",
+        "@atlastodo/shared": "0.1.14-rc.1",
         "@noble/hashes": "^2.4.0",
         "@scure/bip39": "^2.4.0",
       },
@@ -70,9 +70,9 @@
 
     "@asamuzakjp/css-color": ["@asamuzakjp/css-color@3.2.0", "", { "dependencies": { "@csstools/css-calc": "^2.1.3", "@csstools/css-color-parser": "^3.0.9", "@csstools/css-parser-algorithms": "^3.0.4", "@csstools/css-tokenizer": "^3.0.3", "lru-cache": "^10.4.3" } }, "sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw=="],
 
-    "@atlastodo/client-core": ["@atlastodo/client-core@0.1.11", "", { "dependencies": { "@noble/ciphers": "^2.4.0", "@noble/curves": "^2.4.0", "@noble/hashes": "^2.4.0", "@scure/bip39": "^2.4.0" } }, "sha512-+K5gxMl0D+DQ5dIg2gz9H939RKJz8Mqm+lmzov5PtcGSRmJQpCZza1W6SPlXwLzeM0fIE+gNcoYih79KE7gUEA=="],
+    "@atlastodo/client-core": ["@atlastodo/client-core@0.1.14-rc.1", "", { "dependencies": { "@noble/ciphers": "^2.4.0", "@noble/curves": "^2.4.0", "@noble/hashes": "^2.4.0", "@scure/bip39": "^2.4.0" } }, "sha512-JjOhRIeO3WbDrOiXMVUcPJ1S/zHatKN+IrMrK7q7wisy4qyFh1RrIlurowa97ui3L1tAA0jyF9cZNELeI82pKQ=="],
 
-    "@atlastodo/shared": ["@atlastodo/shared@0.1.11", "", { "dependencies": { "@atlastodo/client-core": "0.1.11", "@noble/hashes": "^2.4.0", "fflate": "^0.8.3" } }, "sha512-p21LQlg5riQ+u9tEhHV2o4duPoIxhLtQHIxi3gEPWy435jCkGiLf7EB/een7a/UYHbkMOy6muX8tXHN2a+upig=="],
+    "@atlastodo/shared": ["@atlastodo/shared@0.1.14-rc.1", "", { "dependencies": { "@atlastodo/client-core": "0.1.14-rc.1", "@noble/hashes": "^2.4.0", "fflate": "^0.8.3" } }, "sha512-7BoHpxcMx3SWhw3o2mA3KvmUG2X+KHWH+xL++ATgTfglV4gWIuiNDSEEbED5eJLhPnhGHJsoRUGQueWq7uJ8Fg=="],
 
     "@atlastodo/vault-app": ["@atlastodo/vault-app@workspace:apps/vault"],
 

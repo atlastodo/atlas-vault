@@ -16,7 +16,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@atlastodo/client-core": "0.1.11",
+    "@atlastodo/client-core": "0.1.14-rc.1",
     "@atlastodo/vault-core": "workspace:*",
     "@expo/metro-runtime": "~58.0.14",
     "@react-native-async-storage/async-storage": "2.2.0",
