@@ -29,6 +29,7 @@ import {
   generateUserKeypair,
   kdfForNewCredential,
   parseApiToken,
+  SYNC_PROTOCOL,
   wrapAppKeysForApiToken,
   wrapKey,
   wrapSigningKey,
@@ -233,7 +234,7 @@ describe.skipIf(!URL_ || !CLI)("Atlas Vault and the atlas CLI", () => {
     const headers = {
       authorization: `Bearer ${tokenSession.access_token}`,
       "x-atlas-sync-apps": "vault",
-      "x-atlas-sync-protocol": "6",
+      "x-atlas-sync-protocol": String(SYNC_PROTOCOL),
     };
     const res = await fetch(`${URL_}/sync/push`, {
       method: "POST",
