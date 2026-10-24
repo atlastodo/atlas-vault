@@ -45,4 +45,4 @@ A **test harness for Atlas core**, not a product: a password-manager-shaped clie
 
 - Conventional Commits; a fix closing an issue carries `Fixes #N` in the commit body. Work lands on `dev`; `main` takes only PRs from `dev` (`pr-base.yml`). There are no tags or releases. Never add AI attribution to commits.
 - `ci.yml`: `Lint`, `Test (vault-core)`, `Test (app)` (jest + the web export), `End to end (server + CLI)` (the pinned core release's server image and CLI binary, with the browser checks), `Audit (JS)` (continue-on-error), chosen by changed paths; a manual run runs everything.
-- The two known unfixable `bun audit` advisories are `braces` and `node-forge` (no patched release reachable from the Expo toolchain); fixable ones go in the root `overrides`, never an ignore list.
+- The two known unfixable `bun audit` advisories are `node-forge` (no patched release) and `zod` 3 (fixed only in 4.x; `@expo/cli` needs 3), both in the Expo toolchain and analyzed in `//audit-known` in the root `package.json`; fixable ones go in the root `overrides`, never an ignore list.

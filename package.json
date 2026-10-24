@@ -24,6 +24,7 @@
     "prettier": "3.9.10",
     "typescript": "7.0.2"
   },
+  "//audit-known": "node-forge (GHSA-86w9-cpqp-85rv, <=1.4.0) and zod 3 (GHSA-mrhx-c7xc-m3w5, <4.6.6) are the `bun audit` findings no override can clear: node-forge has no patched release, and the zod fix exists only in 4.x while @expo/cli (its only consumer here) requires zod ^3.25.76. Both are build-time only (the Expo CLI, its config validation and code-signing certificate tooling), so the `Audit (JS)` job stays red on purpose; add an override once a patched release ships or the Expo CLI moves to zod 4.",
   "overrides": {
     "uuid": "^11.1.1",
     "js-yaml": "^4.3.2"
