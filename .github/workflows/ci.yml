@@ -23,7 +23,7 @@ defaults:
     shell: bash
 
 env:
-  # Bun is pinned in lockstep with devenv (its devenv.lock nixpkgs) -- bump them together.
+  # Bun is pinned in lockstep with devenv (the flake's nixpkgs, which devenv follows) -- bump them together.
   BUN_VERSION: "1.4.2"
   NODE_VERSION: "26"
 
@@ -112,6 +112,8 @@ jobs:
       - run: bun run --parallel --filter '*' typecheck
       # The licences of the JS packages the builds ship, against an allow-list.
       - run: node scripts/third-party-licenses.mjs --check
+      # devenv.lock's copy of the flake's nixpkgs must match flake.lock.
+      - run: node scripts/check-devenv-lock.mjs
       - run: bunx oxlint .
       - run: bunx prettier --check .
 
