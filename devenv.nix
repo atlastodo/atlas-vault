@@ -79,6 +79,8 @@ in
     bunx oxlint .
     bunx prettier --check .
     node scripts/third-party-licenses.mjs --check
+    # devenv.yaml follows the flake's nixpkgs; devenv.lock holds a copy of it.
+    node scripts/check-devenv-lock.mjs
     # nix/bun.nix must match bun.lock, or the flake's web-dist build fails offline.
     if command -v nix >/dev/null; then
       fresh="$(mktemp)"
