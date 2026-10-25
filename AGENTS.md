@@ -4,6 +4,7 @@
 
 - Before planning work on a bug, ask questions until the bug is properly understood (symptoms, reproduction, expected vs actual).
 - Also ask questions about the proposed solution before implementing — don't assume intent.
+- Never mention Claude, Claude Code or any other AI in commits, pull requests, tags or release notes: no `Co-Authored-By` trailers, session links or "Generated with" footers.
 
 ## What this is
 
@@ -44,6 +45,6 @@ A **test harness for Atlas core**, not a product: a password-manager-shaped clie
 
 ## CI
 
-- Conventional Commits; a fix closing an issue carries `Fixes #N` in the commit body. Work lands on `dev`; `main` takes only PRs from `dev` (`pr-base.yml`). There are no tags or releases. Never add AI attribution to commits.
+- Conventional Commits; a fix closing an issue carries `Fixes #N` in the commit body. Work lands on `dev`; `main` takes only PRs from `dev` (`pr-base.yml`). There are no tags or releases.
 - `ci.yml`: `Lint`, `Test (vault-core)`, `Test (app)` (jest + the web export), `End to end (server + CLI)` (the pinned core release's server image and CLI binary, with the browser checks), `Audit (JS)` (continue-on-error), chosen by changed paths; a manual run runs everything.
 - The two known unfixable `bun audit` advisories are `node-forge` (no patched release) and `zod` 3 (fixed only in 4.x; `@expo/cli` needs 3), both in the Expo toolchain and analyzed in `//audit-known` in the root `package.json`; fixable ones go in the root `overrides`, never an ignore list.
