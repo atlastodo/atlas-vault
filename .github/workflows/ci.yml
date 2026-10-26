@@ -23,8 +23,6 @@ defaults:
     shell: bash
 
 env:
-  # Bun is pinned in lockstep with devenv (the flake's nixpkgs, which devenv follows) -- bump them together.
-  BUN_VERSION: "1.4.2"
   NODE_VERSION: "26"
 
 jobs:
@@ -73,7 +71,7 @@ jobs:
           esac
           # The compare API lists at most 300 files; past that, assume everything changed.
           if [ "$(grep -c . <<<"$files")" -ge 300 ]; then set_all true; exit 0; fi
-          ci='^\.github/workflows/ci\.yml$'
+          ci='^(\.github/workflows/ci\.yml|\.bun-version)$'
           shared="^(package\.json$|bun\.lock$|bunfig\.toml$)|$ci"
           deps="^(bun\.lock|package\.json|apps/[^/]+/package\.json|packages/[^/]+/package\.json)$|$ci"
           has() { if grep -qE "$1" <<<"$files"; then echo true; else echo false; fi; }
@@ -101,7 +99,7 @@ jobs:
           package-manager-cache: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          bun-version-file: .bun-version
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
@@ -132,7 +130,7 @@ jobs:
           package-manager-cache: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          bun-version-file: .bun-version
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
@@ -160,7 +158,7 @@ jobs:
           package-manager-cache: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          bun-version-file: .bun-version
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
@@ -187,10 +185,6 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.app == 'true' || needs.changes.outputs.core == 'true' }}
     runs-on: ubuntu-24.04
-    env:
-      # The core release whose packages, server and CLI this app is built against.
-      CORE_VERSION: "0.1.14-rc.1"
-      ATLAS_SERVER_IMAGE: ghcr.io/atlastodo/atlas:0.1.14-rc.1
     services:
       postgres:
         image: postgres:16-alpine
@@ -206,13 +200,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The core release whose packages, server and CLI this app is built against: the exact
+      # @atlastodo/client-core version the manifests pin (moved by scripts/update-deps.sh).
+      - name: Read the core pin
+        run: |
+          core="$(git grep -hoE '"@atlastodo/client-core": "[0-9][^"]*"' -- '*package.json' | head -1 | cut -d'"' -f4)"
+          echo "CORE_VERSION=$core" >>"$GITHUB_ENV"
+          echo "ATLAS_SERVER_IMAGE=ghcr.io/atlastodo/atlas:$core" >>"$GITHUB_ENV"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           package-manager-cache: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          bun-version-file: .bun-version
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
@@ -280,5 +281,5 @@ jobs:
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: ${{ env.BUN_VERSION }}
+          bun-version-file: .bun-version
       - run: bun audit

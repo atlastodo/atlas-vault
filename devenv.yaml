@@ -1,10 +1,10 @@
 # yaml-language-server: $schema=https://devenv.sh/devenv.schema.json
 inputs:
   # This repository's own flake: devenv takes nixpkgs from its flake.lock, so the shell and the
-  # flake's packages build from one pin (Node 26, Bun 1.4.2: bump with BUN_VERSION in
-  # .github/workflows/*.yml). `nix flake update` moves it; `devenv update` then copies it into
-  # devenv.lock (`lint` checks the two agree). A relative path input is locked without a hash, so
-  # editing the repository doesn't touch it.
+  # flake's packages build from one pin (Node 26, Bun 1.4.2, which .bun-version follows for CI).
+  # `nix flake update` moves it; `devenv update` then copies it into devenv.lock (`lint` checks the
+  # two agree). A relative path input is locked without a hash, so editing the repository doesn't
+  # touch it.
   atlas-vault:
     url: path:.
   nixpkgs:

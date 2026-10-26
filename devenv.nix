@@ -29,7 +29,7 @@ in
   languages.javascript = {
     enable = true;
     # Node 26, matching `engines` and CI. Node is the runtime; Bun is the package manager. Bun is
-    # pinned to 1.4.2 through this lock's nixpkgs, in lockstep with BUN_VERSION in the workflows.
+    # pinned to 1.4.2 through this lock's nixpkgs, in lockstep with .bun-version (CI).
     package = pkgs.nodejs_26;
     bun.enable = true;
   };
