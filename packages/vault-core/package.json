@@ -21,8 +21,8 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
-    "@atlastodo/client-core": "0.1.14-rc.1",
-    "@atlastodo/shared": "0.1.14-rc.1",
+    "@atlastodo/client-core": "0.1.14",
+    "@atlastodo/shared": "0.1.14",
     "@noble/hashes": "^2.4.0",
     "@scure/bip39": "^2.4.0"
   },
