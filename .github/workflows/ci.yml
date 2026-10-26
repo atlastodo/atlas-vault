@@ -204,7 +204,7 @@ jobs:
       # @atlastodo/client-core version the manifests pin (moved by scripts/update-deps.sh).
       - name: Read the core pin
         run: |
-          core="$(git grep -hoE '"@atlastodo/client-core": "[0-9][^"]*"' -- '*package.json' | head -1 | cut -d'"' -f4)"
+          core="$(git grep -hoE '"@atlastodo/client-core": "[0-9][^"]*"' -- '*package.json' | awk -F'"' 'NR == 1 { print $4 }')"
           echo "CORE_VERSION=$core" >>"$GITHUB_ENV"
           echo "ATLAS_SERVER_IMAGE=ghcr.io/atlastodo/atlas:$core" >>"$GITHUB_ENV"
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
