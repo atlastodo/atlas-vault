@@ -34,7 +34,7 @@
     "react-native-web": "~0.21.4"
   },
   "devDependencies": {
-    "@babel/runtime": "^8.0.7",
+    "@babel/runtime": "^8.0.8",
     "@testing-library/react-native": "^14.1.0",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.3.0",
