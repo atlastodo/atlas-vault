@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The web app in a real browser against a real server, and the atlas CLI beside it
+// The web app in a real browser against a real server, and the atlas-vault CLI beside it
 // (scripts/e2e-cli.sh runs it with E2E_WEB=1): sign up, the recovery phrase, a login with its
 // password masked until revealed, search that never matches a secret, read-only and writing vault
 // tokens made in Settings, the CLI reading the exact password the app stored and refused a write
@@ -8,7 +8,7 @@
 // unlocking, and a session past its auto-lock deadline opening locked.
 //
 // Environment: BASE_URL (the page; a server serving the web export as STATIC_DIR), CHROMIUM (a
-// Chromium binary), ATLAS_CLI (the atlas binary), SCREENSHOT_DIR (optional, keeps screenshots).
+// Chromium binary), ATLAS_CLI (the atlas-vault binary), SCREENSHOT_DIR (optional, keeps screenshots).
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
@@ -143,21 +143,21 @@ try {
   let got = "";
   for (let i = 0; i < 15 && got !== secret; i++) {
     try {
-      got = cli(reader, "vault", "get", "GitHub", "--field", "password").stdout.replace(/\n$/, "");
+      got = cli(reader, "get", "GitHub", "--field", "password").stdout.replace(/\n$/, "");
     } catch {
       got = "";
     }
     if (got !== secret) await page.waitForTimeout(2_000);
   }
-  check(got === secret, "atlas vault get GitHub --field password prints the app's password");
+  check(got === secret, "atlas-vault get GitHub --field password prints the app's password");
 
-  const refused = cli(reader, "vault", "add", "--name", "Nope");
+  const refused = cli(reader, "add", "--name", "Nope");
   check(
     refused.status === 1 && refused.stderr.includes("api_token_read_only"),
     "the read-only token cannot write",
   );
 
-  const added = atlas(writer, "vault", "add", "--name", "Written by the CLI", "--type", "note");
+  const added = atlas(writer, "add", "--name", "Written by the CLI", "--type", "note");
   await page.getByRole("button", { name: "Done" }).click();
   await page.getByRole("button", { name: "Open Written by the CLI" }).waitFor({ timeout: 45_000 });
   check(true, "an item the CLI adds appears in the open app");
@@ -170,7 +170,7 @@ try {
   await page.getByRole("button", { name: "Open GitHub" }).waitFor();
   let listed = [];
   for (let i = 0; i < 15; i++) {
-    listed = atlas(reader, "vault", "list");
+    listed = atlas(reader, "list");
     if (!listed.some((e) => e.id === added.id)) break;
     await page.waitForTimeout(2_000);
   }
@@ -237,7 +237,7 @@ try {
   let synced = "";
   for (let i = 0; i < 20 && synced !== offlineSecret; i++) {
     try {
-      synced = cli(reader, "vault", "get", "Written offline", "--field", "password").stdout;
+      synced = cli(reader, "get", "Written offline", "--field", "password").stdout;
       synced = synced.replace(/\n$/, "");
     } catch {
       synced = "";

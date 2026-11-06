@@ -1,7 +1,7 @@
 /**
- * API tokens for Atlas Vault: what CI jobs and scripts sign in with to read a secret (`atlas vault
- * get …`, the SDK's `VaultClient`; `docs/integrations.md` in the core repository, Vault tokens for
- * CI). A vault token is for the vault alone (`apps: ["vault"]`) and carries the vault app key and
+ * API tokens for Atlas Vault: what CI jobs and scripts sign in with to read a secret
+ * (`atlas-vault get …`, `secretspec-provider-atlas`, `VaultClient`; `docs/integrations.md` in the
+ * core repository, Vault tokens for CI). A vault token is for the vault alone (`apps: ["vault"]`) and carries the vault app key and
  * identity wrapped for itself (`wrapAppKeysForApiToken`), nothing of todo's; the server never sees
  * the token's secret.
  *

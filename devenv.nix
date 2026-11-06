@@ -21,25 +21,35 @@ in
   #
   #   - Node + Bun (apps/vault: the Expo web app, for manual testing;
   #     packages/vault-core: the platform-free vault logic and its tests)
+  #   - Rust (crates/: atlas-vault-rules, the atlas-vault CLI and secretspec-provider-atlas, on
+  #     core's atlas-client)
   #
-  # The sync server (Rust + PostgreSQL), the `atlas` CLI and the core packages are in the core
-  # repository, https://github.com/atlastodo/atlas; this app installs the core packages from npm.
+  # The sync server (Rust + PostgreSQL) and the core packages are in the core repository,
+  # https://github.com/atlastodo/atlas; this app installs the core packages from npm and builds
+  # on core's atlas-client crate by git tag.
   # ---------------------------------------------------------------------------
 
   languages.javascript = {
     enable = true;
     # Node 26, matching `engines` and CI. Node is the runtime; Bun is the package manager. Bun is
-    # pinned to 1.4.2 through this lock's nixpkgs, in lockstep with BUN_VERSION in the workflows.
+    # pinned to 1.4.2 through this lock's nixpkgs, in lockstep with .bun-version (CI).
     package = pkgs.nodejs_26;
     bun.enable = true;
   };
+
+  # The CLI and the SecretSpec provider (crates/): nixpkgs' Rust here, rust-toolchain.toml's in CI
+  # and the release builds (it follows core's, whose atlas-client crate they build on).
+  languages.rust.enable = true;
 
   packages = with pkgs; [
     git
     curl
     jq
+    cargo-nextest
     # psql, for the throwaway database of scripts/e2e-cli.sh.
     postgresql
+    # The real SecretSpec CLI (0.21+), which scripts/e2e-cli.sh drives the provider with.
+    secretspec
   ];
 
   # --- Scripts (developer entry points) --------------------------------------
@@ -61,24 +71,31 @@ in
   scripts."test:all".exec = ''
     set -euo pipefail
     cd "$DEVENV_ROOT"
+    cargo nextest run --workspace
     # `--bun` runs vitest under Bun's runtime, matching CI.
     (cd packages/vault-core && bunx --bun vitest run)
     # jest-expo must run under real Node (`bun run` only starts it).
     (cd apps/vault && bun run test)
   '';
-  # The app and the atlas CLI against a real server: items written by either show up in the
-  # other, and a read-only vault token is refused writes. Needs a core checkout (ATLAS_CORE_DIR,
-  # default ../atlas) and a Postgres; see scripts/e2e-cli.sh.
+  # The CLI, the SecretSpec provider and the app against a real server: items written by the CLI
+  # or the app show up in the other, and a read-only vault token is refused writes. Needs a core
+  # checkout (ATLAS_CORE_DIR, default ../atlas) for the server and a Postgres; see
+  # scripts/e2e-cli.sh.
   scripts."e2e:cli".exec = ''bash "$DEVENV_ROOT/scripts/e2e-cli.sh" "$@"'';
-  # Typecheck every workspace, oxlint (`.oxlintrc.json`), `prettier --check` and the shipped licences.
+  # rustfmt and clippy (as CI's `Lint (Rust)`), every workspace's typecheck, oxlint
+  # (`.oxlintrc.json`), `prettier --check` and the shipped licences.
   scripts.lint.exec = ''
     set -euo pipefail
     cd "$DEVENV_ROOT"
+    cargo fmt --all -- --check
+    cargo clippy --workspace --all-targets --no-deps -- -D warnings
     (cd packages/vault-core && bun run typecheck)
     (cd apps/vault && bun run typecheck)
     bunx oxlint .
     bunx prettier --check .
     node scripts/third-party-licenses.mjs --check
+    # devenv.yaml follows the flake's nixpkgs; devenv.lock holds a copy of it.
+    node scripts/check-devenv-lock.mjs
     # nix/bun.nix must match bun.lock, or the flake's web-dist build fails offline.
     if command -v nix >/dev/null; then
       fresh="$(mktemp)"
@@ -89,6 +106,7 @@ in
   '';
   scripts.fmt.exec = ''
     cd "$DEVENV_ROOT"
+    cargo fmt --all
     bunx prettier --write .
   '';
   # Regenerate nix/bun.nix (the flake's npm dependency set) from bun.lock. Run after every
@@ -99,7 +117,7 @@ in
     nix run --inputs-from . bun2nix -- -c ../ -o nix/bun.nix
   '';
   # Refresh everything Dependabot cannot update (devenv/flake locks, the Bun pins, the whole
-  # bun.lock, the Expo SDK packages, the core pin, nix/bun.nix): scripts/update-deps.sh, which
+  # bun.lock and Cargo.lock, the Expo SDK packages, the core pin, nix/bun.nix): scripts/update-deps.sh, which
   # .github/workflows/deps-refresh.yml runs weekly.
   scripts."deps:update".exec = ''bash "$DEVENV_ROOT/scripts/update-deps.sh" "$@"'';
 
@@ -107,7 +125,7 @@ in
     if [ -n "''${DEVENV_PROFILE:-}" ]; then
       export PATH="$DEVENV_PROFILE/bin:$PATH"
     fi
-    echo "Atlas Vault dev shell -- node $(node --version), bun $(bun --version)"
+    echo "Atlas Vault dev shell -- rust $(rustc --version 2>/dev/null | cut -d' ' -f2), node $(node --version), bun $(bun --version)"
     echo "Atlas Vault is a test harness for Atlas core. Scripts: test:all, e2e:cli, lint, fmt, deps:update, web:dev, web:export"
   '';
 

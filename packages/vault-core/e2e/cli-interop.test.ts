@@ -1,7 +1,7 @@
 /**
- * Atlas Vault and the `atlas vault` CLI against a real server: an item the CLI adds shows up in
+ * Atlas Vault and the `atlas-vault` CLI against a real server: an item the CLI adds shows up in
  * the app's store field for field and one the app writes shows up in the CLI, both ways, with
- * edits, secret history and the trash; `atlas vault get X --field password` prints exactly what
+ * edits, secret history and the trash; `atlas-vault get X --field password` prints exactly what
  * the app stored; and a read-only token made the way the app makes it (`createVaultToken`) is
  * refused writes by the server itself, not only by the CLI. The app side is this package's own
  * code (sign-up, enabling the vault, vault tokens, the sync engine), as the app runs it.
@@ -29,6 +29,7 @@ import {
   generateUserKeypair,
   kdfForNewCredential,
   parseApiToken,
+  SYNC_PROTOCOL,
   wrapAppKeysForApiToken,
   wrapKey,
   wrapSigningKey,
@@ -95,7 +96,7 @@ function asCli(engine: VaultEngine, item: ItemView): VaultItem & { folder_name: 
   return { ...rest, folder_name: engine.items.folderName(item.folder) };
 }
 
-describe.skipIf(!URL_ || !CLI)("Atlas Vault and the atlas CLI", () => {
+describe.skipIf(!URL_ || !CLI)("Atlas Vault and the atlas-vault CLI", () => {
   const email = `vault-e2e-${randomUUID()}@example.com`;
   const password = "correct horse battery staple vault";
   let api: ApiClient;
@@ -129,7 +130,7 @@ describe.skipIf(!URL_ || !CLI)("Atlas Vault and the atlas CLI", () => {
   });
 
   it("shows an item the CLI adds in the app, field for field", async () => {
-    await atlas(rw, ["vault", "folders", "add", "CI"]);
+    await atlas(rw, ["folders", "add", "CI"]);
     const input = {
       name: "Deploy key",
       type: "api_key",
@@ -144,11 +145,11 @@ describe.skipIf(!URL_ || !CLI)("Atlas Vault and the atlas CLI", () => {
       folder: "CI",
     };
     // The secret goes over stdin, never argv.
-    const added = (await atlas(rw, ["vault", "add", "--json", "-"], JSON.stringify(input))) as {
+    const added = (await atlas(rw, ["add", "--json", "-"], JSON.stringify(input))) as {
       id: string;
     };
     await app.syncNow();
-    const full = await atlas(ro, ["vault", "get", added.id]);
+    const full = await atlas(ro, ["get", added.id]);
     const mine = app.items.get(added.id)!;
     expect(mine.locked).toBe(false);
     expect(asCli(app, mine)).toEqual(full);
@@ -172,10 +173,10 @@ describe.skipIf(!URL_ || !CLI)("Atlas Vault and the atlas CLI", () => {
     });
     await app.syncNow();
     expect(app.pendingCount()).toBe(0);
-    const run = await cli(ro, ["vault", "get", "Mail server", "--field", "password"]);
+    const run = await cli(ro, ["get", "Mail server", "--field", "password"]);
     expect(run.code).toBe(0);
     expect(run.stdout).toBe(`${secret}\n`);
-    expect(await atlas(ro, ["vault", "get", made.id])).toEqual(asCli(app, made));
+    expect(await atlas(ro, ["get", made.id])).toEqual(asCli(app, made));
   });
 
   it("shows the app's edits, secret history and trash in the CLI", async () => {
@@ -189,12 +190,12 @@ describe.skipIf(!URL_ || !CLI)("Atlas Vault and the atlas CLI", () => {
     app.items.trash(doomed.id);
     await app.syncNow();
 
-    const listed = (await atlas(ro, ["vault", "list"])) as { id: string; name: string }[];
+    const listed = (await atlas(ro, ["list"])) as { id: string; name: string }[];
     expect(listed.map((i) => i.name)).toEqual(["Deploy key", "Mail server"]);
     // `list` never prints secret values.
     expect(JSON.stringify(listed)).not.toContain("rotated-by-the-app");
-    expect(await atlas(ro, ["vault", "get", mail!.id])).toEqual(asCli(app, edited));
-    const trashed = (await atlas(ro, ["vault", "get", doomed.id])) as VaultItem;
+    expect(await atlas(ro, ["get", mail!.id])).toEqual(asCli(app, edited));
+    const trashed = (await atlas(ro, ["get", doomed.id])) as VaultItem;
     expect(trashed.deleted_at).toBe(app.items.get(doomed.id)!.deleted_at);
   });
 
@@ -203,8 +204,8 @@ describe.skipIf(!URL_ || !CLI)("Atlas Vault and the atlas CLI", () => {
       set_fields: [{ name: "token", value: "sk_live_rotated_by_cli" }],
       favorite: true,
     };
-    await atlas(rw, ["vault", "update", "Deploy key", "--json", "-"], JSON.stringify(patch));
-    await atlas(rw, ["vault", "delete", "Mail server"]);
+    await atlas(rw, ["update", "Deploy key", "--json", "-"], JSON.stringify(patch));
+    await atlas(rw, ["delete", "Mail server"]);
     await app.syncNow();
     const [deploy] = app.items.list({ favorites: true });
     expect(deploy?.name).toBe("Deploy key");
@@ -215,13 +216,13 @@ describe.skipIf(!URL_ || !CLI)("Atlas Vault and the atlas CLI", () => {
 
     app.items.restore(mail.id);
     await app.syncNow();
-    const back = (await atlas(ro, ["vault", "list", "--search", "mail"])) as { id: string }[];
+    const back = (await atlas(ro, ["list", "--search", "mail"])) as { id: string }[];
     expect(back.map((i) => i.id)).toEqual([mail.id]);
   });
 
   it("refuses writes on a read-only token at the server, not only in the CLI", async () => {
     // The CLI checks the session's `write` and refuses before sending anything.
-    const refused = await cli(ro, ["vault", "add", "--name", "Nope"]);
+    const refused = await cli(ro, ["add", "--name", "Nope"]);
     expect(refused.code).toBe(1);
     expect(refused.stderr).toContain("api_token_read_only");
 
@@ -233,7 +234,7 @@ describe.skipIf(!URL_ || !CLI)("Atlas Vault and the atlas CLI", () => {
     const headers = {
       authorization: `Bearer ${tokenSession.access_token}`,
       "x-atlas-sync-apps": "vault",
-      "x-atlas-sync-protocol": "6",
+      "x-atlas-sync-protocol": String(SYNC_PROTOCOL),
     };
     const res = await fetch(`${URL_}/sync/push`, {
       method: "POST",

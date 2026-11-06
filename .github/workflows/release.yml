@@ -1,0 +1,203 @@
+# Release the atlas-vault CLI and secretspec-provider-atlas on a v* tag (the Cargo.toml workspace
+# version, tagged by hand): full CI, then both as static binaries (atlas-vault-X.Y.Z-<target>,
+# secretspec-provider-atlas-X.Y.Z-<target>) and the third-party notices of their crates, then a
+# GitHub Release "Atlas Vault vX.Y.Z" carrying them, their build provenance attestations and
+# SHA256SUMS.txt, with notes GitHub generates from the merged PRs. Only the binaries are released:
+# the web app is a test harness and has no releases. A tag with a "-"
+# (vX.Y.Z-rc.N) is a GitHub prerelease that is never "latest".
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      # ci.yml's `changes` job reads PR file lists; a tag run never uses it, but the grant must cover it.
+      pull-requests: read
+
+  # Fails fast, before anything is built, on a tag that doesn't match the crates' version.
+  prepare:
+    name: Prepare
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check the tag matches Cargo.toml
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          manifest="$(cargo metadata --format-version 1 --no-deps --locked | jq -r '.packages[] | select(.name == "atlas-vault-cli") | .version')"
+          if [ "$version" != "$manifest" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match the workspace version in Cargo.toml ($manifest)."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == *-* ]]; then echo "prerelease=true" >> "$GITHUB_OUTPUT"; else echo "prerelease=false" >> "$GITHUB_OUTPUT"; fi
+
+  # The atlas-vault CLI and secretspec-provider-atlas as one static binary each per platform,
+  # atlas-vault-X.Y.Z-<target> and secretspec-provider-atlas-X.Y.Z-<target> (musl on Linux, for
+  # Alpine-based images such as n8n's and CI runners).
+  cli:
+    name: CLI (${{ matrix.target }})
+    needs: [ci, prepare]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-musl, runner: ubuntu-24.04, zig: true, run: true }
+          - { target: aarch64-unknown-linux-musl, runner: ubuntu-24.04, zig: true, run: false }
+          - { target: aarch64-apple-darwin, runner: macos-15, zig: false, run: true }
+          - { target: x86_64-apple-darwin, runner: macos-15, zig: false, run: false }
+          - { target: x86_64-pc-windows-msvc, runner: windows-2025, zig: false, run: true }
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      TARGET: ${{ matrix.target }}
+      CARGO_PROFILE_RELEASE_LTO: thin
+      CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "1"
+      CARGO_PROFILE_RELEASE_STRIP: symbols
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust (rust-toolchain.toml)
+        run: |
+          rustup toolchain install --no-self-update
+          rustup target add "$TARGET"
+      - if: ${{ matrix.zig }}
+        uses: taiki-e/install-action@68a389c788b2cd04016ce8c80ee23b80d2ab3d68 # v2.88.1
+        with:
+          tool: cargo-zigbuild@0.23.4
+          fallback: none
+      - name: Install zig
+        if: ${{ matrix.zig }}
+        # cargo-zigbuild finds zig as `python3 -m ziglang`.
+        run: |
+          python3 -m venv "$RUNNER_TEMP/zig"
+          "$RUNNER_TEMP/zig/bin/pip" install --quiet ziglang==0.15.2
+          echo "$RUNNER_TEMP/zig/bin" >> "$GITHUB_PATH"
+      - name: Build
+        env:
+          ZIG: ${{ matrix.zig }}
+          # The MSVC C runtime linked in, so the binary needs no Visual C++ redistributable.
+          RUSTFLAGS: ${{ contains(matrix.target, 'windows') && '-C target-feature=+crt-static' || '' }}
+        run: |
+          if [ "$ZIG" = true ]; then
+            cargo zigbuild --release --locked -p atlas-vault-cli -p atlas-secretspec --target "$TARGET"
+          else
+            cargo build --release --locked -p atlas-vault-cli -p atlas-secretspec --target "$TARGET"
+          fi
+          ext=""
+          case "$TARGET" in *windows*) ext=".exe" ;; esac
+          files=()
+          for bin in atlas-vault secretspec-provider-atlas; do
+            cp "target/$TARGET/release/$bin$ext" "$bin-$VERSION-$TARGET$ext"
+            files+=("$bin-$VERSION-$TARGET$ext")
+          done
+          echo "FILES=${files[*]}" >> "$GITHUB_ENV"
+      - name: Check the binaries
+        env:
+          RUN: ${{ matrix.run }}
+        run: |
+          read -r -a files <<<"$FILES"
+          for f in "${files[@]}"; do
+            case "$TARGET" in
+              *linux-musl) file "$f" | tee /dev/stderr | grep -q 'statically linked' ;;
+            esac
+          done
+          if [ "$RUN" = true ]; then
+            "./${files[0]}" --version | grep -qx "$VERSION"
+            "./${files[1]}" --version | grep -q "$VERSION"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cli-${{ matrix.target }}
+          path: |
+            atlas-vault-*
+            secretspec-provider-atlas-*
+          if-no-files-found: error
+          retention-days: 7
+
+  # The licences of the crates the binaries link (scripts/rust-notices.mjs), as THIRD_PARTY_NOTICES.txt.
+  notices:
+    name: Third-party notices
+    needs: [ci, prepare]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust (rust-toolchain.toml)
+        run: rustup toolchain install --no-self-update
+      - run: node scripts/rust-notices.mjs THIRD_PARTY_NOTICES.txt "Atlas Vault" atlas-vault-cli atlas-secretspec
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: third-party-notices
+          path: THIRD_PARTY_NOTICES.txt
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: GitHub Release
+    needs: [prepare, cli, notices]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      # Build provenance attestations for the release files.
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: "{cli-*,third-party-notices}"
+          path: dist
+          merge-multiple: true
+      # Verify a download with: gh attestation verify <file> --repo atlastodo/atlas-vault
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/*-unknown-linux-musl
+            dist/*-apple-darwin
+            dist/*-pc-windows-msvc.exe
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+        # Re-running a tag's workflow updates its release instead of failing on it.
+        run: |
+          cd dist
+          sha256sum -- * > SHA256SUMS.txt
+          tag="$GITHUB_REF_NAME"
+          if [ "$PRERELEASE" = true ]; then
+            flags=(--prerelease --latest=false)
+          else
+            flags=(--prerelease=false --latest)
+          fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --title "Atlas Vault $tag" "${flags[@]}"
+            gh release upload "$tag" --clobber -- *
+          else
+            gh release create "$tag" --verify-tag --title "Atlas Vault $tag" --generate-notes \
+              "${flags[@]}" -- *
+          fi

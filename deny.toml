@@ -1,0 +1,44 @@
+# cargo-deny policy for the atlas-vault CLI and secretspec-provider-atlas (crates/), following
+# core's deny.toml. Run in CI by the `Audit (Rust)` job, which is continue-on-error: a failing check
+# marks that job red without failing the workflow.
+#
+# Disallowed licences, untrusted sources and security advisories all fail the check. Exempt a known
+# advisory in `ignore` only with a written rationale; never disable a whole check.
+
+[advisories]
+ignore = []
+
+[licenses]
+# The permissive licences the dependency tree uses (core's list; cargo-deny warns about unused ones).
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+    # Community Data License Agreement – Permissive 2.0 (webpki-roots, transitive via rustls TLS).
+    "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.8
+
+# Our crates and core's are AGPL-3.0-only (the project licence): allowed for them alone, so a
+# third-party AGPL dependency is still flagged.
+exceptions = [
+    { name = "atlas-core", allow = ["AGPL-3.0-only"] },
+    { name = "atlas-client", allow = ["AGPL-3.0-only"] },
+    { name = "atlas-vault-rules", allow = ["AGPL-3.0-only"] },
+    { name = "atlas-vault-cli", allow = ["AGPL-3.0-only"] },
+    { name = "atlas-secretspec", allow = ["AGPL-3.0-only"] },
+]
+
+[bans]
+multiple-versions = "warn"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+# Core's crates, by release tag.
+allow-git = ["https://github.com/atlastodo/atlas"]

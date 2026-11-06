@@ -47,12 +47,15 @@ describe("VaultEngine", () => {
     expect(a.pendingCount()).toBe(0);
 
     // The server holds only ciphertext under the vault key ("dek" is its role, not todo's DEK):
-    // not the type, name, folder, URL, timestamps or secret.
-    const sets = server.log.filter((o) => o.entity === "vault.item");
-    expect(sets.length).toBe(11);
-    for (const op of [...sets, ...server.log.filter((o) => o.entity === "vault.folder")]) {
-      expect(op.value).toMatchObject({ __enc: 2, kid: "dek" });
-      const wire = JSON.stringify(op.value);
+    // not the type, name, folder, URL, timestamps or secret, and since sync protocol 7 not even
+    // whether an op is an item's or a folder's, or which field it sets.
+    expect(server.log.length).toBeGreaterThanOrEqual(11);
+    for (const op of server.log) {
+      expect(op.entity).toBe("vault.sealed");
+      expect((op as { field?: string }).field).toMatch(/^[0-9a-f]{32}$/);
+      expect(op.value).toMatchObject({ __enc: 3, kid: "dek" });
+      const wire = JSON.stringify(op);
+      expect(wire).not.toMatch(/vault\.item|vault\.folder|"name"|"fields"/);
       for (const plain of [
         "Harbour",
         "sk_live",
@@ -94,8 +97,12 @@ describe("VaultEngine", () => {
     const made = a.items.create({ name: "Private" });
     await a.syncNow();
     await other.syncNow();
-    expect(other.items.get(made.id)).toMatchObject({ name: "", locked: true });
-    expect(() => other.items.update(made.id, { name: "Mine" })).toThrow("cannot be opened");
+    // Without the key nothing tells it the sealed values are an item (protocol 7 hides the kind):
+    // they wait, locked, until a key opens them, and it cannot write over the item.
+    expect(other.items.get(made.id)).toBeNull();
+    expect(other.items.list()).toEqual([]);
+    expect(other.store.lockedCount()).toBeGreaterThan(0);
+    expect(() => other.items.update(made.id, { name: "Mine" })).toThrow();
     await a.stop();
     await other.stop();
   });

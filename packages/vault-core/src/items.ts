@@ -1,7 +1,7 @@
 /**
  * The vault's items and folders in a client-core {@link LocalStore}. Every rule an item obeys is
- * core's (`@atlastodo/shared`'s `vault.ts`, held to the `atlas vault` CLI and the SDK by
- * `vault_item_vectors.json`): {@link newVaultItemFields} for a new item, {@link vaultItemChanges}
+ * `itemRules.ts`'s (held to the `atlas-vault` CLI and `VaultClient` by
+ * `test-vectors/vault_item_vectors.json`): {@link newVaultItemFields} for a new item, {@link vaultItemChanges}
  * for an edit (it also keeps the history of changed secret fields), {@link toVaultItem} to read
  * one. This module only maps them onto the store's field writes, which the sync client pushes.
  * Nothing here talks to the network.
@@ -16,7 +16,7 @@ import {
   type VaultItem,
   type VaultItemInput,
   type VaultItemPatch,
-} from "@atlastodo/shared";
+} from "./itemRules";
 import { queryItems, type VaultQuery } from "./query";
 
 /** The Atlas Vault app id: the `x-atlas-sync-apps` scope and the app key's name. */
