@@ -62,8 +62,8 @@ dependencies = [
 
 [[package]]
 name = "atlas-client"
-version = "0.1.16-rc.1"
-source = "git+https://github.com/atlastodo/atlas?tag=v0.1.16-rc.1#35b2ab6a425e7115516ea6b2ac884e319e16d76c"
+version = "0.1.16"
+source = "git+https://github.com/atlastodo/atlas?tag=v0.1.16#ff459c63e3bb3353b8742ac9a14685661dbef1af"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -88,8 +88,8 @@ dependencies = [
 
 [[package]]
 name = "atlas-core"
-version = "0.1.16-rc.1"
-source = "git+https://github.com/atlastodo/atlas?tag=v0.1.16-rc.1#35b2ab6a425e7115516ea6b2ac884e319e16d76c"
+version = "0.1.16"
+source = "git+https://github.com/atlastodo/atlas?tag=v0.1.16#ff459c63e3bb3353b8742ac9a14685661dbef1af"
 dependencies = [
  "serde",
  "serde_json",
@@ -98,7 +98,7 @@ dependencies = [
 
 [[package]]
 name = "atlas-secretspec"
-version = "0.1.0-rc.2"
+version = "0.1.0"
 dependencies = [
  "async-trait",
  "atlas-client",
@@ -112,7 +112,7 @@ dependencies = [
 
 [[package]]
 name = "atlas-vault-cli"
-version = "0.1.0-rc.2"
+version = "0.1.0"
 dependencies = [
  "atlas-client",
  "atlas-core",
@@ -125,7 +125,7 @@ dependencies = [
 
 [[package]]
 name = "atlas-vault-rules"
-version = "0.1.0-rc.2"
+version = "0.1.0"
 dependencies = [
  "atlas-client",
  "atlas-core",
