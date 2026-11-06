@@ -5,7 +5,7 @@ members = ["crates/atlas-vault-rules", "crates/atlas-vault-cli", "crates/atlas-s
 [workspace.package]
 # The version of the releases of the atlas-vault CLI and secretspec-provider-atlas (a v* tag must
 # match it); the web app has none.
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 edition = "2021"
 license = "AGPL-3.0-only"
 repository = "https://github.com/atlastodo/atlas-vault"

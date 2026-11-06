@@ -98,7 +98,7 @@ dependencies = [
 
 [[package]]
 name = "atlas-secretspec"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "async-trait",
  "atlas-client",
@@ -112,7 +112,7 @@ dependencies = [
 
 [[package]]
 name = "atlas-vault-cli"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "atlas-client",
  "atlas-core",
@@ -125,7 +125,7 @@ dependencies = [
 
 [[package]]
 name = "atlas-vault-rules"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 dependencies = [
  "atlas-client",
  "atlas-core",
