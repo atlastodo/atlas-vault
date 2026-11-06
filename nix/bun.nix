@@ -21,17 +21,13 @@
     url = "https://registry.npmjs.org/@asamuzakjp/css-color/-/css-color-3.2.0.tgz";
     hash = "sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw==";
   };
-  "@atlastodo/client-core@0.1.14" = fetchurl {
-    url = "https://registry.npmjs.org/@atlastodo/client-core/-/client-core-0.1.14.tgz";
-    hash = "sha512-8kUIUODgfGKUlqLSfkMICmIiEygToluYZ8NP4NBtlNzOTIkjJRNQZkxBC0BHEMbeH63sNwy6aDQQGY55rlalLw==";
+  "@atlastodo/client-core@0.1.16-rc.1" = fetchurl {
+    url = "https://registry.npmjs.org/@atlastodo/client-core/-/client-core-0.1.16-rc.1.tgz";
+    hash = "sha512-b2HMOuu05N1rzWtL9erziWuXD4livxjBFj6j6TNcAWIEVVrKUt3s4/2xD65DPP43W6o/ZHtTkZV/W4f8Hig/dQ==";
   };
-  "@atlastodo/sdk@0.1.14" = fetchurl {
-    url = "https://registry.npmjs.org/@atlastodo/sdk/-/sdk-0.1.14.tgz";
-    hash = "sha512-V00/poJDS/wL21Rh3NztCXqjPkjnJOgj44kXWnQlFxmlK+S1LGXEP3pcYa0k8nmkc1KNH0vaWMNatOpAw51rxA==";
-  };
-  "@atlastodo/shared@0.1.14" = fetchurl {
-    url = "https://registry.npmjs.org/@atlastodo/shared/-/shared-0.1.14.tgz";
-    hash = "sha512-bX+2QT42FANTtzHHgiONyLs2Juuz/0nwVRswgaeoOGCEfPK8+M1t0PDtQ/KH4OakJYVYxARCH712GEbhPBYtfQ==";
+  "@atlastodo/sdk@0.1.16-rc.1" = fetchurl {
+    url = "https://registry.npmjs.org/@atlastodo/sdk/-/sdk-0.1.16-rc.1.tgz";
+    hash = "sha512-G8638p4oMipQYQXb5IefxzdTMLoryAPDKlwXH+i+3yy0HCgTlZnntOj8nEVEo2f8CVkXPFRrNxgWKNcfreafEg==";
   };
   "@atlastodo/vault-app" = copyPathToStore ../apps/vault;
   "@atlastodo/vault-core" = copyPathToStore ../packages/vault-core;
@@ -2038,10 +2034,6 @@
   "fetch-nodeshim@0.4.10" = fetchurl {
     url = "https://registry.npmjs.org/fetch-nodeshim/-/fetch-nodeshim-0.4.10.tgz";
     hash = "sha512-m6I8ALe4L4XpdETy7MJZWs6L1IVMbjs99bwbpIKphxX+0CTns4IKDWJY0LWfr4YsFjfg+z1TjzTMU8lKl8rG0w==";
-  };
-  "fflate@0.8.3" = fetchurl {
-    url = "https://registry.npmjs.org/fflate/-/fflate-0.8.3.tgz";
-    hash = "sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==";
   };
   "fill-range@7.1.1" = fetchurl {
     url = "https://registry.npmjs.org/fill-range/-/fill-range-7.1.1.tgz";
