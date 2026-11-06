@@ -1,6 +1,6 @@
 import { defineConfig } from "vitest/config";
 
-/** The end-to-end suites (scripts/e2e-cli.sh): a real server and the atlas CLI. */
+/** The end-to-end suites (scripts/e2e-cli.sh): a real server and the atlas-vault CLI. */
 export default defineConfig({
   test: {
     include: ["e2e/**/*.test.ts"],

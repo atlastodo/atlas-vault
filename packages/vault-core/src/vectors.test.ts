@@ -1,8 +1,8 @@
 /**
- * Core's fixtures, read from the pinned npm packages (so a core bump that changes a rule shows
- * up here): `vault_item_vectors.json` (the item rules the `atlas vault` CLI and the SDK share)
- * replayed through this package's store-backed {@link VaultItems}, so what the app writes is
- * what the CLI would; and `field_policy_vectors.json` for the vault's kinds and token policy.
+ * `test-vectors/vault_item_vectors.json` (the item rules the `atlas-vault` CLI and `VaultClient`
+ * share) replayed through this package's store-backed {@link VaultItems}, so what the app writes
+ * is what the CLI would; and core's `field_policy_vectors.json`, read from the pinned npm package
+ * (so a core bump that changes it shows up here), for the vault's kinds and token policy.
  */
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -12,7 +12,7 @@ import {
   tokenPolicyFor,
   type Operation,
 } from "@atlastodo/client-core";
-import { VaultError } from "@atlastodo/shared";
+import { VaultError } from "./itemRules";
 import { describe, expect, it } from "vitest";
 import { VAULT_TOKEN_POLICY } from "./apiTokens";
 import { VAULT_FOLDER, VAULT_ITEM, VaultItems } from "./items";
@@ -35,7 +35,9 @@ interface PolicyVectors {
   token_policies: { apps: string[]; policy: unknown }[];
 }
 
-const items: ItemVectors = read("@atlastodo/shared/test-vectors/vault_item_vectors.json");
+const items: ItemVectors = JSON.parse(
+  readFileSync(new URL("../../../test-vectors/vault_item_vectors.json", import.meta.url), "utf8"),
+);
 const policies: PolicyVectors = read(
   "@atlastodo/client-core/test-vectors/field_policy_vectors.json",
 );

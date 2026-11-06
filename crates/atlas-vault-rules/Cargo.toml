@@ -1,0 +1,15 @@
+[package]
+name = "atlas-vault-rules"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+description = "Atlas Vault's rules on Atlas core's engine: items, folders, secret history and the vault client, at parity with @atlastodo/vault-core."
+
+[dependencies]
+atlas-client = { workspace = true }
+atlas-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

@@ -25,6 +25,10 @@
     url = "https://registry.npmjs.org/@atlastodo/client-core/-/client-core-0.1.14.tgz";
     hash = "sha512-8kUIUODgfGKUlqLSfkMICmIiEygToluYZ8NP4NBtlNzOTIkjJRNQZkxBC0BHEMbeH63sNwy6aDQQGY55rlalLw==";
   };
+  "@atlastodo/sdk@0.1.14" = fetchurl {
+    url = "https://registry.npmjs.org/@atlastodo/sdk/-/sdk-0.1.14.tgz";
+    hash = "sha512-V00/poJDS/wL21Rh3NztCXqjPkjnJOgj44kXWnQlFxmlK+S1LGXEP3pcYa0k8nmkc1KNH0vaWMNatOpAw51rxA==";
+  };
   "@atlastodo/shared@0.1.14" = fetchurl {
     url = "https://registry.npmjs.org/@atlastodo/shared/-/shared-0.1.14.tgz";
     hash = "sha512-bX+2QT42FANTtzHHgiONyLs2Juuz/0nwVRswgaeoOGCEfPK8+M1t0PDtQ/KH4OakJYVYxARCH712GEbhPBYtfQ==";
