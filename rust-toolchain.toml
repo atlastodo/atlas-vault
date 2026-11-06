@@ -1,0 +1,7 @@
+# The Rust that builds the atlas-vault CLI and the SecretSpec provider: rustup reads this file in
+# CI and the release builds, devenv takes its version (languages.rust in devenv.nix). Keep it with
+# core's (atlastodo/atlas), whose atlas-client crate they build on.
+[toolchain]
+channel = "1.99.1"
+components = ["rustfmt", "clippy"]
+profile = "minimal"

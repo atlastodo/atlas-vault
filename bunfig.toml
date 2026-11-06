@@ -4,4 +4,4 @@ pathIgnorePatterns = ["**"]
 
 [install]
 # Our own core packages skip the release-age check scripts/update-deps.sh applies (`deps:update`).
-minimumReleaseAgeExcludes = ["@atlastodo/client-core", "@atlastodo/shared"]
+minimumReleaseAgeExcludes = ["@atlastodo/client-core", "@atlastodo/sdk"]

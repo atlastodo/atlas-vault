@@ -132,7 +132,7 @@ export function SettingsScreen({
 }
 
 /**
- * Vault-only API tokens for CI and scripts (`atlas vault get …`, the SDK's `VaultClient`). The
+ * Vault-only API tokens for CI and scripts (`atlas-vault get …`, `secretspec-provider-atlas`, `VaultClient`). The
  * server's policy for vault tokens: an expiry is required (at most a year), and a token reads only
  * unless writes are turned on here. A new token is shown once.
  */
@@ -220,7 +220,7 @@ function ApiTokens() {
           </Text>
           <CopyButton value={created.token} secret label="the new token" />
           <Text selectable style={[local.mono, { color: p.muted }]}>
-            ATLAS_URL={serverUrl} ATLAS_TOKEN=… atlas vault get "Deploy key" --field token
+            ATLAS_URL={serverUrl} ATLAS_TOKEN=… atlas-vault get "Deploy key" --field token
           </Text>
           <Muted>{created.write ? "It can read and write." : "It is read-only."}</Muted>
           <Button

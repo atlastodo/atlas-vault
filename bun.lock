@@ -49,7 +49,7 @@
       "version": "0.1.0-rc.1",
       "dependencies": {
         "@atlastodo/client-core": "0.1.14",
-        "@atlastodo/shared": "0.1.14",
+        "@atlastodo/sdk": "0.1.14",
         "@noble/hashes": "^2.4.0",
         "@scure/bip39": "^2.4.0",
       },
@@ -71,6 +71,8 @@
     "@asamuzakjp/css-color": ["@asamuzakjp/css-color@3.2.0", "", { "dependencies": { "@csstools/css-calc": "^2.1.3", "@csstools/css-color-parser": "^3.0.9", "@csstools/css-parser-algorithms": "^3.0.4", "@csstools/css-tokenizer": "^3.0.3", "lru-cache": "^10.4.3" } }, "sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw=="],
 
     "@atlastodo/client-core": ["@atlastodo/client-core@0.1.14", "", { "dependencies": { "@noble/ciphers": "^2.4.0", "@noble/curves": "^2.4.0", "@noble/hashes": "^2.4.0", "@scure/bip39": "^2.4.0" } }, "sha512-8kUIUODgfGKUlqLSfkMICmIiEygToluYZ8NP4NBtlNzOTIkjJRNQZkxBC0BHEMbeH63sNwy6aDQQGY55rlalLw=="],
+
+    "@atlastodo/sdk": ["@atlastodo/sdk@0.1.14", "", { "dependencies": { "@atlastodo/client-core": "0.1.14", "@atlastodo/shared": "0.1.14" } }, "sha512-V00/poJDS/wL21Rh3NztCXqjPkjnJOgj44kXWnQlFxmlK+S1LGXEP3pcYa0k8nmkc1KNH0vaWMNatOpAw51rxA=="],
 
     "@atlastodo/shared": ["@atlastodo/shared@0.1.14", "", { "dependencies": { "@atlastodo/client-core": "0.1.14", "@noble/hashes": "^2.4.0", "fflate": "^0.8.3" } }, "sha512-bX+2QT42FANTtzHHgiONyLs2Juuz/0nwVRswgaeoOGCEfPK8+M1t0PDtQ/KH4OakJYVYxARCH712GEbhPBYtfQ=="],
 

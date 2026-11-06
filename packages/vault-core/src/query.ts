@@ -5,7 +5,7 @@
  * the history.
  */
 
-import { VAULT_FIELD_KINDS, VAULT_SECRET_KINDS, type VaultItem } from "@atlastodo/shared";
+import { VAULT_FIELD_KINDS, VAULT_SECRET_KINDS, type VaultItem } from "./itemRules";
 
 export interface VaultQuery {
   /** A folder id, or `"none"` for items in no folder; all folders when left out. */
