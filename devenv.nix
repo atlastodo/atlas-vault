@@ -116,9 +116,9 @@ in
     cd "$DEVENV_ROOT"
     nix run --inputs-from . bun2nix -- -c ../ -o nix/bun.nix
   '';
-  # Refresh everything Dependabot cannot update (devenv/flake locks, the Bun pins, the whole
-  # bun.lock and Cargo.lock, the Expo SDK packages, the core pin, nix/bun.nix): scripts/update-deps.sh, which
-  # .github/workflows/deps-refresh.yml runs weekly.
+  # Refresh every dependency (devenv/flake locks, the Bun pins, the whole
+  # bun.lock and Cargo.lock, the Expo SDK packages, the core pin, nix/bun.nix): scripts/update-deps.sh,
+  # run by hand (this demo app has no automated dependency PRs).
   scripts."deps:update".exec = ''bash "$DEVENV_ROOT/scripts/update-deps.sh" "$@"'';
 
   enterShell = ''

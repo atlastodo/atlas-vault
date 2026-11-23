@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Refreshes every dependency Dependabot can't reach, so nothing sits on an old version:
+# Refreshes every dependency, so nothing sits on an old version:
 #   flake.lock(s) and devenv.lock (nixpkgs, shared by the two: Node, Bun, …); the Bun pin
 #   (.bun-version) and the docs, which follow the Bun that nixpkgs ships; the core pin (in the apps);
 #   the whole bun.lock, transitive dependencies and overrides included; each Expo app's SDK-managed
-#   packages (`expo install --fix`); Cargo.lock; and nix/bun.nix. Steps for files a repo doesn't have are skipped. Run by
-#   `.github/workflows/deps-refresh.yml` weekly, or locally as `deps:update`.
+#   packages (`expo install --fix`); Cargo.lock; and nix/bun.nix. Steps for files a repo doesn't have are skipped. Run
+#   locally as `deps:update`.
 #
 # npm releases must be at least DEPS_MIN_AGE seconds old (default 3 days), a buffer against
 # hijacked releases. Exempt: the packages in bunfig.toml's `minimumReleaseAgeExcludes` (our own)
